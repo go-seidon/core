@@ -17,6 +17,6 @@ func (s *builtinStorage) RetrieveFile(p goseidon.RetrieveFileParam) (*goseidon.R
 	return nil, fmt.Errorf("failed retrieve file")
 }
 
-func NewStorage() (*builtinStorage, error) {
+func NewBuiltinStorage() (goseidon.Storage, error) {
 	return &builtinStorage{}, nil
 }

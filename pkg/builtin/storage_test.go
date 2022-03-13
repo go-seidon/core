@@ -15,10 +15,10 @@ func TestBuiltin(t *testing.T) {
 }
 
 var _ = Describe("Storage", func() {
-	Context("NewStorage function", func() {
+	Context("NewBuiltinStorage function", func() {
 		When("success create storage", func() {
 			It("should return builtin storage", func() {
-				s, err := builtin.NewStorage()
+				s, err := builtin.NewBuiltinStorage()
 
 				Expect(s).ToNot(BeNil())
 				Expect(err).To(BeNil())
@@ -33,7 +33,7 @@ var _ = Describe("Storage", func() {
 		)
 
 		BeforeEach(func() {
-			storage, _ := builtin.NewStorage()
+			storage, _ := builtin.NewBuiltinStorage()
 			s = storage
 			p = goseidon.UploadFileParam{}
 		})
@@ -55,7 +55,7 @@ var _ = Describe("Storage", func() {
 		)
 
 		BeforeEach(func() {
-			storage, _ := builtin.NewStorage()
+			storage, _ := builtin.NewBuiltinStorage()
 			s = storage
 			p = goseidon.RetrieveFileParam{}
 		})
