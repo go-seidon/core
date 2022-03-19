@@ -5,8 +5,6 @@ default: help
 help:
 	@echo 'usage: make [target] ...'
 	@echo ''
-	@echo 'targets:'
-	@echo 'generate-mock'
 
 install-tool:
 	go get -u github.com/golang/mock/gomock
