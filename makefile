@@ -23,9 +23,6 @@ clean-dependency:
 install:
 	go install -v ./...
 
-run:
-	go run main.go
-
 test:
 	go test ./... -coverprofile coverage.out
 	go tool cover -func coverage.out | grep ^total:
@@ -33,3 +30,6 @@ test:
 generate-mock:
 	mockgen -source goseidon.go -destination=goseidon_mock.go -package=goseidon
 	mockgen -source pkg/aws-s3/storage.go -destination=pkg/aws-s3/storage_mock.go -package=aws_s3
+
+run-example:
+	go run example/main.go
