@@ -5,6 +5,7 @@ type BinaryFile = []byte
 type UploadFileParam struct {
 	FileData BinaryFile
 	FileName string
+	FileSize int64
 }
 
 type UploadFileResult struct {
