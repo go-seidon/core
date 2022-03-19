@@ -3,6 +3,7 @@ package aws_s3
 import (
 	"bytes"
 	"fmt"
+	"io"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -53,9 +54,8 @@ func (s *awsS3Storage) RetrieveFile(p goseidon.RetrieveFileParam) (*goseidon.Ret
 	if err != nil {
 		return nil, err
 	}
-	var fileData goseidon.BinaryFile
-	_, err = out.Body.Read(fileData)
-	defer out.Body.Close()
+
+	fileData, err := io.ReadAll(out.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -64,6 +64,34 @@ func (s *awsS3Storage) RetrieveFile(p goseidon.RetrieveFileParam) (*goseidon.Ret
 		File: fileData,
 	}
 	return res, nil
+}
+
+func NewAwsS3Option(bucketName string) (*AwsS3Option, error) {
+	if bucketName == "" {
+		return nil, fmt.Errorf("invalid aws s3 bucket name")
+	}
+	op := &AwsS3Option{
+		BucketName: bucketName,
+	}
+	return op, nil
+}
+
+func NewAwsS3Credential(region, accessKeyId, secretAccessKey string) (*AwsS3Credential, error) {
+	if region == "" {
+		return nil, fmt.Errorf("invalid aws s3 region")
+	}
+	if accessKeyId == "" {
+		return nil, fmt.Errorf("invalid aws s3 access key id")
+	}
+	if secretAccessKey == "" {
+		return nil, fmt.Errorf("invalid aws s3 secret access key")
+	}
+	cr := &AwsS3Credential{
+		Region:          region,
+		AccessKeyId:     accessKeyId,
+		SecretAccessKey: secretAccessKey,
+	}
+	return cr, nil
 }
 
 func NewAwsS3Client(cr *AwsS3Credential) (AwsS3Client, error) {

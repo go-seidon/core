@@ -3,6 +3,7 @@ package aws_s3_test
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"testing"
 
 	// goseidon "github.com/go-seidon/core"
@@ -201,7 +202,7 @@ var _ = Describe("Storage", func() {
 				res, err := s.RetrieveFile(p)
 
 				eRes := &goseidon.RetrieveFileResult{
-					File: nil,
+					File: []byte{},
 				}
 				Expect(res).To(Equal(eRes))
 				Expect(err).To(BeNil())
@@ -214,7 +215,7 @@ type readCloser struct {
 }
 
 func (rc *readCloser) Read(p []byte) (n int, err error) {
-	return 0, nil
+	return 0, io.EOF
 }
 
 func (rc *readCloser) Close() error {
