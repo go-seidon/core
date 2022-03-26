@@ -2,9 +2,10 @@ package http
 
 import (
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
+
+	"golang.org/x/net/context"
 )
 
 type Header struct {
@@ -33,13 +34,13 @@ type httpService struct {
 }
 
 func (s *httpService) Get(p RequestParam) (*ResponseResult, error) {
-
 	res, err := s.request("GET", p)
 	if err != nil {
 		return nil, err
 	}
+	defer res.Body.Close()
 
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -57,8 +58,9 @@ func (s *httpService) Post(p RequestParam) (*ResponseResult, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer res.Body.Close()
 
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +74,10 @@ func (s *httpService) Post(p RequestParam) (*ResponseResult, error) {
 }
 
 func (s *httpService) request(m string, p RequestParam) (*http.Response, error) {
-	req, err := http.NewRequest(m, p.Url, p.Body)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancelFunc()
+
+	req, err := http.NewRequestWithContext(ctx, m, p.Url, p.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +86,6 @@ func (s *httpService) request(m string, p RequestParam) (*http.Response, error) 
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
 
 	return res, nil
 }
