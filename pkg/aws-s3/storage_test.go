@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -82,6 +83,76 @@ var _ = Describe("Storage", func() {
 
 				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 credential")))
 				Expect(cl).To(BeNil())
+			})
+		})
+
+		When("failed create session", func() {
+			It("should return error", func() {
+				os.Setenv("AWS_SDK_LOAD_CONFIG", "true")
+				os.Setenv("AWS_S3_USE_ARN_REGION", "invalid_value")
+				cr := &aws_s3.AwsS3Credential{}
+				cl, err := aws_s3.NewAwsS3Client(cr)
+
+				Expect(err).To(Equal(fmt.Errorf("failed to load environment config, invalid value for environment variable, AWS_S3_USE_ARN_REGION=invalid_value, need true or false")))
+				Expect(cl).To(BeNil())
+			})
+		})
+	})
+
+	Context("NewAwsS3Credential function", func() {
+		When("region is invalid", func() {
+			It("should return error", func() {
+				cr, err := aws_s3.NewAwsS3Credential("", "some-access-key", "some-secret-key")
+
+				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 region")))
+				Expect(cr).To(BeNil())
+			})
+		})
+
+		When("accessKeyId is invalid", func() {
+			It("should return error", func() {
+				cr, err := aws_s3.NewAwsS3Credential("ap-southeast-2", "", "some-secret-key")
+
+				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 access key id")))
+				Expect(cr).To(BeNil())
+			})
+		})
+
+		When("secretAccessKey is invalid", func() {
+			It("should return error", func() {
+				cr, err := aws_s3.NewAwsS3Credential("ap-southeast-2", "some-access-key", "")
+
+				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 secret access key")))
+				Expect(cr).To(BeNil())
+			})
+		})
+
+		When("all param is valid", func() {
+			It("should return aws s3 credential", func() {
+				cr, err := aws_s3.NewAwsS3Credential("ap-southeast-2", "some-access-key", "some-secret-key")
+
+				Expect(err).To(BeNil())
+				Expect(cr).ToNot(BeNil())
+			})
+		})
+	})
+
+	Context("NewAwsS3Option function", func() {
+		When("bucketName is invalid", func() {
+			It("should return error", func() {
+				op, err := aws_s3.NewAwsS3Option("")
+
+				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 bucket name")))
+				Expect(op).To(BeNil())
+			})
+		})
+
+		When("all param is valid", func() {
+			It("should return aws s3 option", func() {
+				op, err := aws_s3.NewAwsS3Option("some-bucket-name")
+
+				Expect(err).To(BeNil())
+				Expect(op).ToNot(BeNil())
 			})
 		})
 	})
