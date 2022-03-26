@@ -6,7 +6,6 @@ import (
 	"io"
 	"testing"
 
-	// goseidon "github.com/go-seidon/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	goseidon "github.com/go-seidon/core"
@@ -185,6 +184,30 @@ var _ = Describe("Storage", func() {
 			})
 		})
 
+		When("failed read file", func() {
+			It("should return error", func() {
+				param := &s3.GetObjectInput{
+					Key:    aws.String(p.Id),
+					Bucket: aws.String(op.BucketName),
+				}
+
+				out := &s3.GetObjectOutput{
+					Body: &readCloser{
+						readShouldError: true,
+					},
+				}
+				cl.EXPECT().
+					GetObject(gomock.Eq(param)).
+					Return(out, nil).
+					Times(1)
+
+				res, err := s.RetrieveFile(p)
+
+				Expect(res).To(BeNil())
+				Expect(err.Error()).To(Equal("failed read file"))
+			})
+		})
+
 		When("success retrieve file", func() {
 			It("should return result", func() {
 				param := &s3.GetObjectInput{
@@ -212,9 +235,13 @@ var _ = Describe("Storage", func() {
 })
 
 type readCloser struct {
+	readShouldError bool
 }
 
 func (rc *readCloser) Read(p []byte) (n int, err error) {
+	if rc.readShouldError {
+		return 0, fmt.Errorf("failed read file")
+	}
 	return 0, io.EOF
 }
 
