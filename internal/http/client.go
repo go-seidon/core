@@ -23,9 +23,9 @@ type ResponseResult struct {
 	StatusCode int
 }
 
-type HttpClient interface {
-	Get(RequestParam) (*ResponseResult, error)
-	Post(RequestParam) (*ResponseResult, error)
+type HttpService interface {
+	Get(p RequestParam) (*ResponseResult, error)
+	Post(p RequestParam) (*ResponseResult, error)
 }
 
 type httpService struct {
@@ -33,16 +33,11 @@ type httpService struct {
 }
 
 func (s *httpService) Get(p RequestParam) (*ResponseResult, error) {
-	req, err := http.NewRequest("GET", p.Url, p.Body)
-	if err != nil {
-		return nil, err
-	}
 
-	res, err := s.httpClient.Do(req)
+	res, err := s.request("GET", p)
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
 
 	data, err := ioutil.ReadAll(res.Body)
 	if err != nil {
@@ -58,16 +53,10 @@ func (s *httpService) Get(p RequestParam) (*ResponseResult, error) {
 }
 
 func (s *httpService) Post(p RequestParam) (*ResponseResult, error) {
-	req, err := http.NewRequest("POST", p.Url, p.Body)
+	res, err := s.request("POST", p)
 	if err != nil {
 		return nil, err
 	}
-
-	res, err := s.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
 
 	data, err := ioutil.ReadAll(res.Body)
 	if err != nil {
@@ -82,7 +71,22 @@ func (s *httpService) Post(p RequestParam) (*ResponseResult, error) {
 	return result, nil
 }
 
-func NewHttpClient() *httpService {
+func (s *httpService) request(m string, p RequestParam) (*http.Response, error) {
+	req, err := http.NewRequest(m, p.Url, p.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	return res, nil
+}
+
+func NewHttpClient() HttpService {
 	return &httpService{
 		httpClient: http.Client{},
 	}
