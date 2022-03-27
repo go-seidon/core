@@ -7,8 +7,7 @@ on:
     types: [opened, synchronize, reopened]
 jobs:
   code_scan:
-    name: SonarCloud
-    needs: test
+    name: Code Scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
