@@ -13,3 +13,5 @@ Upcoming support:
 - `google storage`
 - `alicloud oss`
 
+## Doc
+See [code example](example/main.go) for the moment 😁
