@@ -1,3 +1,4 @@
 .scannerwork
 *.env
 *.out
+vendor/*
