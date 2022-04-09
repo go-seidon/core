@@ -6,7 +6,6 @@ import (
 	"os"
 
 	goseidon "github.com/go-seidon/core"
-	"github.com/go-seidon/core/internal/io"
 	aws_s3 "github.com/go-seidon/core/pkg/aws-s3"
 	"github.com/go-seidon/core/pkg/local"
 )
@@ -49,12 +48,7 @@ func TryLocal() {
 		panic(err)
 	}
 
-	fm, err := io.NewFileManager()
-	if err != nil {
-		panic(err)
-	}
-
-	storage, err := local.NewLocalStorage(config, fm)
+	storage, err := local.NewLocalStorage(config)
 	if err != nil {
 		panic(err)
 	}

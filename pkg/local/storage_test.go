@@ -22,38 +22,27 @@ func TestLocal(t *testing.T) {
 var _ = Describe("Storage", func() {
 	Context("NewLocalStorage function", func() {
 		var (
-			c  *local.LocalConfig
-			fm io.FileManagerService
+			c *local.LocalConfig
 		)
 
 		BeforeEach(func() {
 			c = &local.LocalConfig{
 				StorageDir: "storage",
 			}
-			fm, _ = io.NewFileManager()
 		})
 
 		When("config is invalid", func() {
 			It("should return error", func() {
-				s, err := local.NewLocalStorage(nil, fm)
+				s, err := local.NewLocalStorage(nil)
 
 				Expect(s).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("invalid storage config")))
 			})
 		})
 
-		When("file manager is invalid", func() {
-			It("should return error", func() {
-				s, err := local.NewLocalStorage(c, nil)
-
-				Expect(s).To(BeNil())
-				Expect(err).To(Equal(fmt.Errorf("invalid file manager")))
-			})
-		})
-
 		When("success create storage", func() {
 			It("should return local storage", func() {
-				s, err := local.NewLocalStorage(c, fm)
+				s, err := local.NewLocalStorage(c)
 
 				Expect(s).ToNot(BeNil())
 				Expect(err).To(BeNil())
@@ -103,7 +92,8 @@ var _ = Describe("Storage", func() {
 			t := GinkgoT()
 			ctrl := gomock.NewController(t)
 			fm = io.NewMockFileManagerService(ctrl)
-			storage, _ := local.NewLocalStorage(c, fm)
+			storage, _ := local.NewLocalStorage(c)
+			storage.FileManager = fm
 			s = storage
 		})
 
@@ -182,7 +172,8 @@ var _ = Describe("Storage", func() {
 			t := GinkgoT()
 			ctrl := gomock.NewController(t)
 			fm = io.NewMockFileManagerService(ctrl)
-			storage, _ := local.NewLocalStorage(c, fm)
+			storage, _ := local.NewLocalStorage(c)
+			storage.FileManager = fm
 			s = storage
 		})
 
