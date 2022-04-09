@@ -17,6 +17,4 @@ Upcoming support:
 See [code example](example/main.go) for the moment 😁
 
 ## Todo
-1. aws s3 storage: simplify `NewAwsS3Storage` parameter (do we need `AWSS3Option`?)
-2. local storage: simplify `NewLocalStorage` parameter (seperate `io.FileManagerService` for test and client usage)
-3. local storage: should create `storageDir` if not exists
+1. local storage: should create `storageDir` if not exists
