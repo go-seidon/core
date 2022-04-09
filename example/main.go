@@ -101,22 +101,15 @@ func TryS3() {
 	accessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
 	secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
 	bucketName := os.Getenv("AWS_S3_BUCKET_NAME")
-	cr, err := aws_s3.NewAwsS3Credential(region, accessKeyId, secretAccessKey)
-	if err != nil {
-		panic(err)
+	cfg := &aws_s3.AwsS3Config{
+		Credential: &aws_s3.AwsS3Credential{
+			Region:          region,
+			AccessKeyId:     accessKeyId,
+			SecretAccessKey: secretAccessKey,
+		},
+		BucketName: bucketName,
 	}
-
-	cl, err := aws_s3.NewAwsS3Client(cr)
-	if err != nil {
-		panic(err)
-	}
-
-	op, err := aws_s3.NewAwsS3Option(bucketName)
-	if err != nil {
-		panic(err)
-	}
-
-	storage, err := aws_s3.NewAwsS3Storage(cl, op)
+	storage, err := aws_s3.NewAwsS3Storage(cfg)
 	if err != nil {
 		panic(err)
 	}
@@ -154,7 +147,7 @@ func TryS3() {
 	fmt.Println("Finish trying Goseidon Storage with S3 provider")
 	fmt.Println()
 
-	fmt.Printf("Don't forget to delete the uploaded file in: %s\n\r", op.BucketName)
+	fmt.Printf("Don't forget to delete the uploaded file in: %s\n\r", cfg.BucketName)
 	fmt.Println("Press any key to continue...")
 	fmt.Scanln()
 }
