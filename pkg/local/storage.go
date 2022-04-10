@@ -13,19 +13,19 @@ type LocalConfig struct {
 	StorageDir string
 }
 
-type localStorage struct {
-	config      *LocalConfig
-	fileManager io.FileManagerService
+type LocalStorage struct {
+	Config      *LocalConfig
+	FileManager io.FileManagerService
 }
 
-func (s *localStorage) UploadFile(p goseidon.UploadFileParam) (*goseidon.UploadFileResult, error) {
-	path := fmt.Sprintf("%s/%s", s.config.StorageDir, p.FileName)
-	if s.fileManager.IsFileExists(path) {
+func (s *LocalStorage) UploadFile(p goseidon.UploadFileParam) (*goseidon.UploadFileResult, error) {
+	path := fmt.Sprintf("%s/%s", s.Config.StorageDir, p.FileName)
+	if s.FileManager.IsFileExists(path) {
 		return nil, fmt.Errorf("file already exists")
 	}
 
 	permission := fs.FileMode(0644)
-	err := s.fileManager.WriteFile(path, p.FileData, permission)
+	err := s.FileManager.WriteFile(path, p.FileData, permission)
 	if err != nil {
 		return nil, fmt.Errorf("failed storing file")
 	}
@@ -36,19 +36,19 @@ func (s *localStorage) UploadFile(p goseidon.UploadFileParam) (*goseidon.UploadF
 	return res, nil
 }
 
-func (s *localStorage) RetrieveFile(p goseidon.RetrieveFileParam) (*goseidon.RetrieveFileResult, error) {
-	path := fmt.Sprintf("%s/%s", s.config.StorageDir, p.Id)
-	if !s.fileManager.IsFileExists(path) {
+func (s *LocalStorage) RetrieveFile(p goseidon.RetrieveFileParam) (*goseidon.RetrieveFileResult, error) {
+	path := fmt.Sprintf("%s/%s", s.Config.StorageDir, p.Id)
+	if !s.FileManager.IsFileExists(path) {
 		return nil, fmt.Errorf("file is not found")
 	}
 
-	file, err := s.fileManager.Open(path)
+	file, err := s.FileManager.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed open file")
 	}
 	defer file.Close()
 
-	binFile, err := s.fileManager.ReadFile(file)
+	binFile, err := s.FileManager.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
@@ -59,16 +59,14 @@ func (s *localStorage) RetrieveFile(p goseidon.RetrieveFileParam) (*goseidon.Ret
 	return res, nil
 }
 
-func NewLocalStorage(c *LocalConfig, fm io.FileManagerService) (goseidon.Storage, error) {
+func NewLocalStorage(c *LocalConfig) (*LocalStorage, error) {
 	if c == nil {
 		return nil, fmt.Errorf("invalid storage config")
 	}
-	if fm == nil {
-		return nil, fmt.Errorf("invalid file manager")
-	}
-	s := &localStorage{
-		config:      c,
-		fileManager: fm,
+	fm, _ := io.NewFileManager()
+	s := &LocalStorage{
+		Config:      c,
+		FileManager: fm,
 	}
 	return s, nil
 }
