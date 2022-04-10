@@ -86,6 +86,44 @@ func (mr *MockRetrieverMockRecorder) RetrieveFile(arg0 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveFile", reflect.TypeOf((*MockRetriever)(nil).RetrieveFile), arg0)
 }
 
+// MockDeleter is a mock of Deleter interface.
+type MockDeleter struct {
+	ctrl     *gomock.Controller
+	recorder *MockDeleterMockRecorder
+}
+
+// MockDeleterMockRecorder is the mock recorder for MockDeleter.
+type MockDeleterMockRecorder struct {
+	mock *MockDeleter
+}
+
+// NewMockDeleter creates a new mock instance.
+func NewMockDeleter(ctrl *gomock.Controller) *MockDeleter {
+	mock := &MockDeleter{ctrl: ctrl}
+	mock.recorder = &MockDeleterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockDeleter) EXPECT() *MockDeleterMockRecorder {
+	return m.recorder
+}
+
+// DeleteFile mocks base method.
+func (m *MockDeleter) DeleteFile(arg0 DeleteFileParam) (*DeleteFileResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteFile", arg0)
+	ret0, _ := ret[0].(*DeleteFileResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteFile indicates an expected call of DeleteFile.
+func (mr *MockDeleterMockRecorder) DeleteFile(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFile", reflect.TypeOf((*MockDeleter)(nil).DeleteFile), arg0)
+}
+
 // MockStorage is a mock of Storage interface.
 type MockStorage struct {
 	ctrl     *gomock.Controller
@@ -107,6 +145,21 @@ func NewMockStorage(ctrl *gomock.Controller) *MockStorage {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 	return m.recorder
+}
+
+// DeleteFile mocks base method.
+func (m *MockStorage) DeleteFile(arg0 DeleteFileParam) (*DeleteFileResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteFile", arg0)
+	ret0, _ := ret[0].(*DeleteFileResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteFile indicates an expected call of DeleteFile.
+func (mr *MockStorageMockRecorder) DeleteFile(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFile", reflect.TypeOf((*MockStorage)(nil).DeleteFile), arg0)
 }
 
 // RetrieveFile mocks base method.
