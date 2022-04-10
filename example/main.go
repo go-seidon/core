@@ -25,24 +25,77 @@ func main() {
 
 	fmt.Printf("Choosen menu: %s \n\r", menu)
 
+	var storage goseidon.Storage
+
 	switch menu {
 	case "1":
-		TryLocal()
+		storage = MustCreateLocalStorage()
 	case "2":
-		TryS3()
+		storage = MustCreateAwsS3Storage()
 	default:
 		fmt.Println()
 		fmt.Println("Invalid storage provider")
 		fmt.Println("Please choose between [1, 2]")
+		return
 	}
 
-}
-
-func TryLocal() {
 	fmt.Println()
-	fmt.Println("Trying Goseidon Storage with Local provider")
+	fmt.Println("Trying Goseidon Storage")
 	fmt.Println("==================================")
 
+	osFile, err := os.Open("example/dolphin.jpg")
+	if err != nil {
+		panic(err)
+	}
+	defer osFile.Close()
+
+	fileInfo, _ := osFile.Stat()
+	var fileSize int64 = fileInfo.Size()
+	fileData := make([]byte, fileSize)
+	osFile.Read(fileData)
+
+	uploadRes, err := storage.UploadFile(goseidon.UploadFileParam{
+		FileName: fileInfo.Name(),
+		FileData: fileData,
+		FileSize: fileSize,
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Upload Result => ", uploadRes)
+
+	retrieveRes, err := storage.RetrieveFile(goseidon.RetrieveFileParam{
+		Id: fileInfo.Name(),
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Retrieve Result => ", retrieveRes)
+
+	fmt.Println("==================================")
+	fmt.Println("Please check the uploaded file")
+	fmt.Println("==================================")
+	fmt.Scanln()
+
+	fmt.Println("Press any key to delete the uploaded file...")
+	fmt.Scanln()
+
+	deleteRes, err := storage.DeleteFile(goseidon.DeleteFileParam{
+		Id: fileInfo.Name(),
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("File deleted at: %s \n\r", deleteRes.DeletedAt.Local())
+	fmt.Println("==================================")
+	fmt.Println()
+
+	fmt.Println("Press any key to continue...")
+
+	fmt.Scanln()
+}
+
+func MustCreateLocalStorage() goseidon.Storage {
 	config, err := local.NewLocalConfig("storage")
 	if err != nil {
 		panic(err)
@@ -53,50 +106,10 @@ func TryLocal() {
 		panic(err)
 	}
 
-	osFile, err := os.Open("example/dolphin.jpg")
-	if err != nil {
-		panic(err)
-	}
-	defer osFile.Close()
-
-	fileInfo, _ := osFile.Stat()
-	var fileSize int64 = fileInfo.Size()
-	fileData := make([]byte, fileSize)
-	osFile.Read(fileData)
-
-	uploadRes, err := storage.UploadFile(goseidon.UploadFileParam{
-		FileName: fileInfo.Name(),
-		FileData: fileData,
-		FileSize: fileSize,
-	})
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Upload Result => ", uploadRes)
-
-	retrieveRes, err := storage.RetrieveFile(goseidon.RetrieveFileParam{
-		Id: fileInfo.Name(),
-	})
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Retrieve Result => ", retrieveRes)
-
-	fmt.Println("==================================")
-	fmt.Println("Finish trying Goseidon Storage with Local provider")
-	fmt.Println()
-
-	fmt.Printf("Don't forget to delete the uploaded file in: %s \n\r", config.StorageDir)
-	fmt.Println("Press any key to continue...")
-
-	fmt.Scanln()
+	return storage
 }
 
-func TryS3() {
-	fmt.Println()
-	fmt.Println("Trying Goseidon Storage with S3 provider")
-	fmt.Println("==================================")
-
+func MustCreateAwsS3Storage() goseidon.Storage {
 	region := os.Getenv("AWS_REGION")
 	accessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
 	secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
@@ -107,45 +120,11 @@ func TryS3() {
 		secretAccessKey,
 		bucketName,
 	)
+
 	storage, err := aws_s3.NewAwsS3Storage(cfg)
 	if err != nil {
 		panic(err)
 	}
 
-	osFile, err := os.Open("example/dolphin.jpg")
-	if err != nil {
-		panic(err)
-	}
-	defer osFile.Close()
-
-	fileInfo, _ := osFile.Stat()
-	var fileSize int64 = fileInfo.Size()
-	fileData := make([]byte, fileSize)
-	osFile.Read(fileData)
-
-	uploadRes, err := storage.UploadFile(goseidon.UploadFileParam{
-		FileName: fileInfo.Name(),
-		FileData: fileData,
-		FileSize: fileSize,
-	})
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Upload Result => ", uploadRes)
-
-	retrieveRes, err := storage.RetrieveFile(goseidon.RetrieveFileParam{
-		Id: fileInfo.Name(),
-	})
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Retrieve Result => ", retrieveRes)
-
-	fmt.Println("==================================")
-	fmt.Println("Finish trying Goseidon Storage with S3 provider")
-	fmt.Println()
-
-	fmt.Printf("Don't forget to delete the uploaded file in: %s\n\r", cfg.BucketName)
-	fmt.Println("Press any key to continue...")
-	fmt.Scanln()
+	return storage
 }
