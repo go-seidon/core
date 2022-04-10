@@ -9,8 +9,9 @@ import (
 	"os"
 )
 
-type FileManagerService interface {
-	IsFileExists(path string) bool
+type FileManager interface {
+	IsExists(path string) bool
+	CreateDir(path string, perm fs.FileMode) error
 	WriteFile(name string, data []byte, perm fs.FileMode) error
 	Open(path string) (*os.File, error)
 	ReadFile(file *os.File) ([]byte, error)
@@ -19,9 +20,13 @@ type FileManagerService interface {
 type fileManager struct {
 }
 
-func (s *fileManager) IsFileExists(path string) bool {
+func (s *fileManager) IsExists(path string) bool {
 	_, err := os.Stat(path)
 	return !errors.Is(err, os.ErrNotExist)
+}
+
+func (s *fileManager) CreateDir(path string, perm fs.FileMode) error {
+	return os.MkdirAll(path, perm)
 }
 
 func (s *fileManager) WriteFile(name string, data []byte, perm fs.FileMode) error {
@@ -45,7 +50,7 @@ func (s *fileManager) ReadFile(file *os.File) ([]byte, error) {
 	return bytes, nil
 }
 
-func NewFileManager() (FileManagerService, error) {
+func NewFileManager() (FileManager, error) {
 	s := &fileManager{}
 	return s, nil
 }

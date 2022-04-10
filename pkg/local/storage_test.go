@@ -78,7 +78,7 @@ var _ = Describe("Storage", func() {
 			s  goseidon.Storage
 			p  goseidon.UploadFileParam
 			c  *local.LocalConfig
-			fm *io.MockFileManagerService
+			fm *io.MockFileManager
 		)
 
 		BeforeEach(func() {
@@ -91,18 +91,43 @@ var _ = Describe("Storage", func() {
 			}
 			t := GinkgoT()
 			ctrl := gomock.NewController(t)
-			fm = io.NewMockFileManagerService(ctrl)
+			fm = io.NewMockFileManager(ctrl)
 			storage, _ := local.NewLocalStorage(c)
 			storage.FileManager = fm
 			s = storage
 		})
 
+		When("failed create storage dir", func() {
+			It("should return error", func() {
+				fm.EXPECT().
+					IsExists(gomock.Eq(c.StorageDir)).
+					Return(false).
+					Times(1)
+
+				fm.EXPECT().
+					CreateDir(gomock.Eq(c.StorageDir), gomock.Eq(fs.FileMode(0644))).
+					Return(fmt.Errorf("invalid storage dir")).
+					Times(1)
+
+				res, err := s.UploadFile(p)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("failed create storage dir: %s", c.StorageDir)))
+			})
+		})
+
 		When("file already exists", func() {
 			It("should return error", func() {
 				fm.EXPECT().
-					IsFileExists(gomock.Eq(c.StorageDir + "/" + p.FileName)).
+					IsExists(gomock.Eq(c.StorageDir)).
 					Return(true).
 					Times(1)
+
+				fm.EXPECT().
+					IsExists(gomock.Eq(c.StorageDir + "/" + p.FileName)).
+					Return(true).
+					Times(1)
+
 				res, err := s.UploadFile(p)
 
 				Expect(res).To(BeNil())
@@ -113,9 +138,15 @@ var _ = Describe("Storage", func() {
 		When("failed upload file", func() {
 			It("should return error", func() {
 				fm.EXPECT().
-					IsFileExists(gomock.Eq(c.StorageDir + "/" + p.FileName)).
+					IsExists(gomock.Eq(c.StorageDir)).
+					Return(true).
+					Times(1)
+
+				fm.EXPECT().
+					IsExists(gomock.Eq(c.StorageDir + "/" + p.FileName)).
 					Return(false).
 					Times(1)
+
 				fm.EXPECT().
 					WriteFile(
 						gomock.Eq(c.StorageDir+"/"+p.FileName),
@@ -134,9 +165,15 @@ var _ = Describe("Storage", func() {
 		When("success upload file", func() {
 			It("should return result", func() {
 				fm.EXPECT().
-					IsFileExists(gomock.Eq(c.StorageDir + "/" + p.FileName)).
+					IsExists(gomock.Eq(c.StorageDir)).
+					Return(true).
+					Times(1)
+
+				fm.EXPECT().
+					IsExists(gomock.Eq(c.StorageDir + "/" + p.FileName)).
 					Return(false).
 					Times(1)
+
 				fm.EXPECT().
 					WriteFile(
 						gomock.Eq(c.StorageDir+"/"+p.FileName),
@@ -159,7 +196,7 @@ var _ = Describe("Storage", func() {
 			s  goseidon.Storage
 			p  goseidon.RetrieveFileParam
 			c  *local.LocalConfig
-			fm *io.MockFileManagerService
+			fm *io.MockFileManager
 		)
 
 		BeforeEach(func() {
@@ -171,7 +208,7 @@ var _ = Describe("Storage", func() {
 			}
 			t := GinkgoT()
 			ctrl := gomock.NewController(t)
-			fm = io.NewMockFileManagerService(ctrl)
+			fm = io.NewMockFileManager(ctrl)
 			storage, _ := local.NewLocalStorage(c)
 			storage.FileManager = fm
 			s = storage
@@ -180,7 +217,7 @@ var _ = Describe("Storage", func() {
 		When("file is not available", func() {
 			It("should return error", func() {
 				fm.EXPECT().
-					IsFileExists(gomock.Eq(c.StorageDir + "/" + p.Id)).
+					IsExists(gomock.Eq(c.StorageDir + "/" + p.Id)).
 					Return(false).
 					Times(1)
 				res, err := s.RetrieveFile(p)
@@ -193,7 +230,7 @@ var _ = Describe("Storage", func() {
 		When("failed open file", func() {
 			It("should return error", func() {
 				fm.EXPECT().
-					IsFileExists(gomock.Eq(c.StorageDir + "/" + p.Id)).
+					IsExists(gomock.Eq(c.StorageDir + "/" + p.Id)).
 					Return(true).
 					Times(1)
 
@@ -212,7 +249,7 @@ var _ = Describe("Storage", func() {
 		When("failed read file", func() {
 			It("should return error", func() {
 				fm.EXPECT().
-					IsFileExists(gomock.Eq(c.StorageDir + "/" + p.Id)).
+					IsExists(gomock.Eq(c.StorageDir + "/" + p.Id)).
 					Return(true).
 					Times(1)
 
@@ -237,7 +274,7 @@ var _ = Describe("Storage", func() {
 		When("success retrieve file", func() {
 			It("should return result", func() {
 				fm.EXPECT().
-					IsFileExists(gomock.Eq(c.StorageDir + "/" + p.Id)).
+					IsExists(gomock.Eq(c.StorageDir + "/" + p.Id)).
 					Return(true).
 					Times(1)
 

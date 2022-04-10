@@ -12,45 +12,59 @@ import (
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockFileManagerService is a mock of FileManagerService interface.
-type MockFileManagerService struct {
+// MockFileManager is a mock of FileManager interface.
+type MockFileManager struct {
 	ctrl     *gomock.Controller
-	recorder *MockFileManagerServiceMockRecorder
+	recorder *MockFileManagerMockRecorder
 }
 
-// MockFileManagerServiceMockRecorder is the mock recorder for MockFileManagerService.
-type MockFileManagerServiceMockRecorder struct {
-	mock *MockFileManagerService
+// MockFileManagerMockRecorder is the mock recorder for MockFileManager.
+type MockFileManagerMockRecorder struct {
+	mock *MockFileManager
 }
 
-// NewMockFileManagerService creates a new mock instance.
-func NewMockFileManagerService(ctrl *gomock.Controller) *MockFileManagerService {
-	mock := &MockFileManagerService{ctrl: ctrl}
-	mock.recorder = &MockFileManagerServiceMockRecorder{mock}
+// NewMockFileManager creates a new mock instance.
+func NewMockFileManager(ctrl *gomock.Controller) *MockFileManager {
+	mock := &MockFileManager{ctrl: ctrl}
+	mock.recorder = &MockFileManagerMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockFileManagerService) EXPECT() *MockFileManagerServiceMockRecorder {
+func (m *MockFileManager) EXPECT() *MockFileManagerMockRecorder {
 	return m.recorder
 }
 
-// IsFileExists mocks base method.
-func (m *MockFileManagerService) IsFileExists(path string) bool {
+// CreateDir mocks base method.
+func (m *MockFileManager) CreateDir(path string, perm fs.FileMode) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsFileExists", path)
+	ret := m.ctrl.Call(m, "CreateDir", path, perm)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateDir indicates an expected call of CreateDir.
+func (mr *MockFileManagerMockRecorder) CreateDir(path, perm interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDir", reflect.TypeOf((*MockFileManager)(nil).CreateDir), path, perm)
+}
+
+// IsExists mocks base method.
+func (m *MockFileManager) IsExists(path string) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsExists", path)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
-// IsFileExists indicates an expected call of IsFileExists.
-func (mr *MockFileManagerServiceMockRecorder) IsFileExists(path interface{}) *gomock.Call {
+// IsExists indicates an expected call of IsExists.
+func (mr *MockFileManagerMockRecorder) IsExists(path interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsFileExists", reflect.TypeOf((*MockFileManagerService)(nil).IsFileExists), path)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsExists", reflect.TypeOf((*MockFileManager)(nil).IsExists), path)
 }
 
 // Open mocks base method.
-func (m *MockFileManagerService) Open(path string) (*os.File, error) {
+func (m *MockFileManager) Open(path string) (*os.File, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Open", path)
 	ret0, _ := ret[0].(*os.File)
@@ -59,13 +73,13 @@ func (m *MockFileManagerService) Open(path string) (*os.File, error) {
 }
 
 // Open indicates an expected call of Open.
-func (mr *MockFileManagerServiceMockRecorder) Open(path interface{}) *gomock.Call {
+func (mr *MockFileManagerMockRecorder) Open(path interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Open", reflect.TypeOf((*MockFileManagerService)(nil).Open), path)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Open", reflect.TypeOf((*MockFileManager)(nil).Open), path)
 }
 
 // ReadFile mocks base method.
-func (m *MockFileManagerService) ReadFile(file *os.File) ([]byte, error) {
+func (m *MockFileManager) ReadFile(file *os.File) ([]byte, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ReadFile", file)
 	ret0, _ := ret[0].([]byte)
@@ -74,13 +88,13 @@ func (m *MockFileManagerService) ReadFile(file *os.File) ([]byte, error) {
 }
 
 // ReadFile indicates an expected call of ReadFile.
-func (mr *MockFileManagerServiceMockRecorder) ReadFile(file interface{}) *gomock.Call {
+func (mr *MockFileManagerMockRecorder) ReadFile(file interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadFile", reflect.TypeOf((*MockFileManagerService)(nil).ReadFile), file)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadFile", reflect.TypeOf((*MockFileManager)(nil).ReadFile), file)
 }
 
 // WriteFile mocks base method.
-func (m *MockFileManagerService) WriteFile(name string, data []byte, perm fs.FileMode) error {
+func (m *MockFileManager) WriteFile(name string, data []byte, perm fs.FileMode) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "WriteFile", name, data, perm)
 	ret0, _ := ret[0].(error)
@@ -88,7 +102,7 @@ func (m *MockFileManagerService) WriteFile(name string, data []byte, perm fs.Fil
 }
 
 // WriteFile indicates an expected call of WriteFile.
-func (mr *MockFileManagerServiceMockRecorder) WriteFile(name, data, perm interface{}) *gomock.Call {
+func (mr *MockFileManagerMockRecorder) WriteFile(name, data, perm interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteFile", reflect.TypeOf((*MockFileManagerService)(nil).WriteFile), name, data, perm)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteFile", reflect.TypeOf((*MockFileManager)(nil).WriteFile), name, data, perm)
 }
