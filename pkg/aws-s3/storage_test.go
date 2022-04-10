@@ -30,45 +30,83 @@ var _ = Describe("Storage", func() {
 		t = GinkgoT()
 	})
 
-	Context("NewAwsS3Storage function", func() {
-		When("success create storage", func() {
-			It("should return aws_s3 storage", func() {
-				ctrl := gomock.NewController(t)
-				cl := aws_s3.NewMockAwsS3Client(ctrl)
-				op := &aws_s3.AwsS3Option{}
-				s, err := aws_s3.NewAwsS3Storage(cl, op)
+	Context("NewAwsS3Config function", func() {
+		When("all param is valid", func() {
+			It("should return aws_s3 config", func() {
+				res, err := aws_s3.NewAwsS3Config(
+					"mock-region",
+					"mock-access-key-id",
+					"mock-secret-access-key",
+					"mock-bucket-name",
+				)
 
-				Expect(s).ToNot(BeNil())
+				Expect(res).ToNot(BeNil())
 				Expect(err).To(BeNil())
 			})
 		})
 
-		When("client is invalid", func() {
+		When("region is invalid", func() {
 			It("should return error", func() {
-				op := &aws_s3.AwsS3Option{}
-				s, err := aws_s3.NewAwsS3Storage(nil, op)
+				res, err := aws_s3.NewAwsS3Config(
+					"",
+					"mock-access-key-id",
+					"mock-secret-access-key",
+					"mock-bucket-name",
+				)
 
-				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 client")))
-				Expect(s).To(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 region")))
+				Expect(res).To(BeNil())
 			})
 		})
 
-		When("option is invalid", func() {
+		When("access key is invalid", func() {
 			It("should return error", func() {
-				ctrl := gomock.NewController(t)
-				cl := aws_s3.NewMockAwsS3Client(ctrl)
-				s, err := aws_s3.NewAwsS3Storage(cl, nil)
+				res, err := aws_s3.NewAwsS3Config(
+					"mock-region",
+					"",
+					"mock-secret-access-key",
+					"mock-bucket-name",
+				)
 
-				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 option")))
-				Expect(s).To(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 access key")))
+				Expect(res).To(BeNil())
 			})
 		})
+
+		When("secret access key is invalid", func() {
+			It("should return error", func() {
+				res, err := aws_s3.NewAwsS3Config(
+					"mock-region",
+					"mock-access-key-id",
+					"",
+					"mock-bucket-name",
+				)
+
+				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 secret access key")))
+				Expect(res).To(BeNil())
+			})
+		})
+
+		When("bucket name is invalid", func() {
+			It("should return error", func() {
+				res, err := aws_s3.NewAwsS3Config(
+					"mock-region",
+					"mock-access-key-id",
+					"mock-secret-access-key",
+					"",
+				)
+
+				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 bucket name")))
+				Expect(res).To(BeNil())
+			})
+		})
+
 	})
 
 	Context("NewAwsS3Client function", func() {
 		When("success create client", func() {
 			It("should return aws s3 client", func() {
-				cr := &aws_s3.AwsS3Credential{}
+				cr := aws_s3.AwsS3Credential{}
 
 				cl, err := aws_s3.NewAwsS3Client(cr)
 
@@ -77,20 +115,11 @@ var _ = Describe("Storage", func() {
 			})
 		})
 
-		When("credential is invalid", func() {
-			It("should return error", func() {
-				cl, err := aws_s3.NewAwsS3Client(nil)
-
-				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 credential")))
-				Expect(cl).To(BeNil())
-			})
-		})
-
 		When("failed create session", func() {
 			It("should return error", func() {
 				os.Setenv("AWS_SDK_LOAD_CONFIG", "true")
 				os.Setenv("AWS_S3_USE_ARN_REGION", "invalid_value")
-				cr := &aws_s3.AwsS3Credential{}
+				cr := aws_s3.AwsS3Credential{}
 				cl, err := aws_s3.NewAwsS3Client(cr)
 
 				Expect(err).To(Equal(fmt.Errorf("failed to load environment config, invalid value for environment variable, AWS_S3_USE_ARN_REGION=invalid_value, need true or false")))
@@ -99,79 +128,54 @@ var _ = Describe("Storage", func() {
 		})
 	})
 
-	Context("NewAwsS3Credential function", func() {
-		When("region is invalid", func() {
-			It("should return error", func() {
-				cr, err := aws_s3.NewAwsS3Credential("", "some-access-key", "some-secret-key")
-
-				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 region")))
-				Expect(cr).To(BeNil())
-			})
-		})
-
-		When("accessKeyId is invalid", func() {
-			It("should return error", func() {
-				cr, err := aws_s3.NewAwsS3Credential("ap-southeast-2", "", "some-secret-key")
-
-				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 access key id")))
-				Expect(cr).To(BeNil())
-			})
-		})
-
-		When("secretAccessKey is invalid", func() {
-			It("should return error", func() {
-				cr, err := aws_s3.NewAwsS3Credential("ap-southeast-2", "some-access-key", "")
-
-				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 secret access key")))
-				Expect(cr).To(BeNil())
-			})
-		})
-
+	Context("NewAwsS3Storage function", func() {
 		When("all param is valid", func() {
-			It("should return aws s3 credential", func() {
-				cr, err := aws_s3.NewAwsS3Credential("ap-southeast-2", "some-access-key", "some-secret-key")
+			It("should return aws_s3 storage", func() {
+				ctrl := gomock.NewController(t)
+				cl := aws_s3.NewMockAwsS3Client(ctrl)
+				cfg, _ := aws_s3.NewAwsS3Config(
+					"mock-region",
+					"mock-access-key-id",
+					"mock-secret-access-key",
+					"mock-bucket-name",
+				)
+				s, err := aws_s3.NewAwsS3Storage(cfg)
+				s.Client = cl
 
+				Expect(s).ToNot(BeNil())
 				Expect(err).To(BeNil())
-				Expect(cr).ToNot(BeNil())
 			})
 		})
-	})
 
-	Context("NewAwsS3Option function", func() {
-		When("bucketName is invalid", func() {
+		When("config is invalid", func() {
 			It("should return error", func() {
-				op, err := aws_s3.NewAwsS3Option("")
+				s, err := aws_s3.NewAwsS3Storage(nil)
 
-				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 bucket name")))
-				Expect(op).To(BeNil())
-			})
-		})
-
-		When("all param is valid", func() {
-			It("should return aws s3 option", func() {
-				op, err := aws_s3.NewAwsS3Option("some-bucket-name")
-
-				Expect(err).To(BeNil())
-				Expect(op).ToNot(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 config")))
+				Expect(s).To(BeNil())
 			})
 		})
 	})
 
 	Context("UploadFile method", func() {
 		var (
-			s  goseidon.Storage
-			p  goseidon.UploadFileParam
-			cl *aws_s3.MockAwsS3Client
-			op *aws_s3.AwsS3Option
+			s   goseidon.Storage
+			p   goseidon.UploadFileParam
+			cl  *aws_s3.MockAwsS3Client
+			cfg *aws_s3.AwsS3Config
 		)
 
 		BeforeEach(func() {
 			ctrl := gomock.NewController(t)
 			cl = aws_s3.NewMockAwsS3Client(ctrl)
-			op = &aws_s3.AwsS3Option{
-				BucketName: "mock-bucket-name",
-			}
-			storage, _ := aws_s3.NewAwsS3Storage(cl, op)
+			cfg, _ = aws_s3.NewAwsS3Config(
+				"mock-region",
+				"mock-access-key-id",
+				"mock-secret-access-key",
+				"mock-bucket-name",
+			)
+			storage, _ := aws_s3.NewAwsS3Storage(cfg)
+			storage.Client = cl
 			s = storage
 			p = goseidon.UploadFileParam{}
 		})
@@ -180,7 +184,7 @@ var _ = Describe("Storage", func() {
 			It("should return error", func() {
 				param := &s3.PutObjectInput{
 					Body:   bytes.NewReader(p.FileData),
-					Bucket: aws.String(op.BucketName),
+					Bucket: aws.String(cfg.BucketName),
 					Key:    aws.String(p.FileName),
 				}
 				cl.EXPECT().
@@ -198,7 +202,7 @@ var _ = Describe("Storage", func() {
 			It("should return result", func() {
 				param := &s3.PutObjectInput{
 					Body:   bytes.NewReader(p.FileData),
-					Bucket: aws.String(op.BucketName),
+					Bucket: aws.String(cfg.BucketName),
 					Key:    aws.String(p.FileName),
 				}
 				out := &s3.PutObjectOutput{}
@@ -219,19 +223,23 @@ var _ = Describe("Storage", func() {
 
 	Context("RetrieveFile method", func() {
 		var (
-			s  goseidon.Storage
-			p  goseidon.RetrieveFileParam
-			cl *aws_s3.MockAwsS3Client
-			op *aws_s3.AwsS3Option
+			s   goseidon.Storage
+			p   goseidon.RetrieveFileParam
+			cl  *aws_s3.MockAwsS3Client
+			cfg *aws_s3.AwsS3Config
 		)
 
 		BeforeEach(func() {
 			ctrl := gomock.NewController(t)
 			cl = aws_s3.NewMockAwsS3Client(ctrl)
-			op = &aws_s3.AwsS3Option{
-				BucketName: "mock-bucket-name",
-			}
-			storage, _ := aws_s3.NewAwsS3Storage(cl, op)
+			cfg, _ = aws_s3.NewAwsS3Config(
+				"mock-region",
+				"mock-access-key-id",
+				"mock-secret-access-key",
+				"mock-bucket-name",
+			)
+			storage, _ := aws_s3.NewAwsS3Storage(cfg)
+			storage.Client = cl
 			s = storage
 			p = goseidon.RetrieveFileParam{
 				Id: "mock-file-id",
@@ -242,7 +250,7 @@ var _ = Describe("Storage", func() {
 			It("should return error", func() {
 				param := &s3.GetObjectInput{
 					Key:    aws.String(p.Id),
-					Bucket: aws.String(op.BucketName),
+					Bucket: aws.String(cfg.BucketName),
 				}
 				cl.EXPECT().
 					GetObject(gomock.Eq(param)).
@@ -259,7 +267,7 @@ var _ = Describe("Storage", func() {
 			It("should return error", func() {
 				param := &s3.GetObjectInput{
 					Key:    aws.String(p.Id),
-					Bucket: aws.String(op.BucketName),
+					Bucket: aws.String(cfg.BucketName),
 				}
 
 				out := &s3.GetObjectOutput{
@@ -283,7 +291,7 @@ var _ = Describe("Storage", func() {
 			It("should return result", func() {
 				param := &s3.GetObjectInput{
 					Key:    aws.String(p.Id),
-					Bucket: aws.String(op.BucketName),
+					Bucket: aws.String(cfg.BucketName),
 				}
 
 				out := &s3.GetObjectOutput{
