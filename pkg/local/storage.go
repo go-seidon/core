@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"strings"
+	"time"
 
 	goseidon "github.com/go-seidon/core"
 	"github.com/go-seidon/core/internal/io"
@@ -63,6 +64,24 @@ func (s *LocalStorage) RetrieveFile(p goseidon.RetrieveFileParam) (*goseidon.Ret
 
 	res := &goseidon.RetrieveFileResult{
 		File: binFile,
+	}
+	return res, nil
+}
+
+func (s *LocalStorage) DeleteFile(p goseidon.DeleteFileParam) (*goseidon.DeleteFileResult, error) {
+	path := fmt.Sprintf("%s/%s", s.config.StorageDir, p.Id)
+	if !s.FileManager.IsExists(path) {
+		return nil, fmt.Errorf("file is not found")
+	}
+
+	err := s.FileManager.RemoveFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed delete file")
+	}
+
+	res := &goseidon.DeleteFileResult{
+		Id:        p.Id,
+		DeletedAt: time.Now(),
 	}
 	return res, nil
 }
