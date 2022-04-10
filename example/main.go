@@ -101,14 +101,12 @@ func TryS3() {
 	accessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
 	secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
 	bucketName := os.Getenv("AWS_S3_BUCKET_NAME")
-	cfg := &aws_s3.AwsS3Config{
-		Credential: &aws_s3.AwsS3Credential{
-			Region:          region,
-			AccessKeyId:     accessKeyId,
-			SecretAccessKey: secretAccessKey,
-		},
-		BucketName: bucketName,
-	}
+	cfg, _ := aws_s3.NewAwsS3Config(
+		region,
+		accessKeyId,
+		secretAccessKey,
+		bucketName,
+	)
 	storage, err := aws_s3.NewAwsS3Storage(cfg)
 	if err != nil {
 		panic(err)

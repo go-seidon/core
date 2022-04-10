@@ -30,19 +30,90 @@ var _ = Describe("Storage", func() {
 		t = GinkgoT()
 	})
 
+	Context("NewAwsS3Config function", func() {
+		When("all param is valid", func() {
+			It("should return aws_s3 config", func() {
+				res, err := aws_s3.NewAwsS3Config(
+					"mock-region",
+					"mock-access-key-id",
+					"mock-secret-access-key",
+					"mock-bucket-name",
+				)
+
+				Expect(res).ToNot(BeNil())
+				Expect(err).To(BeNil())
+			})
+		})
+
+		When("region is invalid", func() {
+			It("should return error", func() {
+				res, err := aws_s3.NewAwsS3Config(
+					"",
+					"mock-access-key-id",
+					"mock-secret-access-key",
+					"mock-bucket-name",
+				)
+
+				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 region")))
+				Expect(res).To(BeNil())
+			})
+		})
+
+		When("access key is invalid", func() {
+			It("should return error", func() {
+				res, err := aws_s3.NewAwsS3Config(
+					"mock-region",
+					"",
+					"mock-secret-access-key",
+					"mock-bucket-name",
+				)
+
+				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 access key")))
+				Expect(res).To(BeNil())
+			})
+		})
+
+		When("secret access key is invalid", func() {
+			It("should return error", func() {
+				res, err := aws_s3.NewAwsS3Config(
+					"mock-region",
+					"mock-access-key-id",
+					"",
+					"mock-bucket-name",
+				)
+
+				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 secret access key")))
+				Expect(res).To(BeNil())
+			})
+		})
+
+		When("bucket name is invalid", func() {
+			It("should return error", func() {
+				res, err := aws_s3.NewAwsS3Config(
+					"mock-region",
+					"mock-access-key-id",
+					"mock-secret-access-key",
+					"",
+				)
+
+				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 bucket name")))
+				Expect(res).To(BeNil())
+			})
+		})
+
+	})
+
 	Context("NewAwsS3Storage function", func() {
 		When("all param is valid", func() {
 			It("should return aws_s3 storage", func() {
 				ctrl := gomock.NewController(t)
 				cl := aws_s3.NewMockAwsS3Client(ctrl)
-				cfg := &aws_s3.AwsS3Config{
-					BucketName: "mock-bucket-name",
-					Credential: &aws_s3.AwsS3Credential{
-						Region:          "mock-region",
-						AccessKeyId:     "mock-access-key-id",
-						SecretAccessKey: "mock-secret-access-key",
-					},
-				}
+				cfg, _ := aws_s3.NewAwsS3Config(
+					"mock-region",
+					"mock-access-key-id",
+					"mock-secret-access-key",
+					"mock-bucket-name",
+				)
 				s, err := aws_s3.NewAwsS3Storage(cfg)
 				s.Client = cl
 
@@ -56,86 +127,6 @@ var _ = Describe("Storage", func() {
 				s, err := aws_s3.NewAwsS3Storage(nil)
 
 				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 config")))
-				Expect(s).To(BeNil())
-			})
-		})
-
-		When("credential is invalid", func() {
-			It("should return error", func() {
-				cfg := &aws_s3.AwsS3Config{
-					BucketName: "mock-bucket-name",
-					Credential: nil,
-				}
-				s, err := aws_s3.NewAwsS3Storage(cfg)
-
-				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 credential")))
-				Expect(s).To(BeNil())
-			})
-		})
-
-		When("region is invalid", func() {
-			It("should return error", func() {
-				cfg := &aws_s3.AwsS3Config{
-					BucketName: "mock-bucket-name",
-					Credential: &aws_s3.AwsS3Credential{
-						Region:          "",
-						AccessKeyId:     "mock-access-key-id",
-						SecretAccessKey: "mock-secret-access-key",
-					},
-				}
-				s, err := aws_s3.NewAwsS3Storage(cfg)
-
-				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 region")))
-				Expect(s).To(BeNil())
-			})
-		})
-
-		When("access key is invalid", func() {
-			It("should return error", func() {
-				cfg := &aws_s3.AwsS3Config{
-					BucketName: "mock-bucket-name",
-					Credential: &aws_s3.AwsS3Credential{
-						Region:          "mock-region",
-						AccessKeyId:     "",
-						SecretAccessKey: "mock-secret-access-key",
-					},
-				}
-				s, err := aws_s3.NewAwsS3Storage(cfg)
-
-				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 access key")))
-				Expect(s).To(BeNil())
-			})
-		})
-
-		When("secret access key is invalid", func() {
-			It("should return error", func() {
-				cfg := &aws_s3.AwsS3Config{
-					BucketName: "mock-bucket-name",
-					Credential: &aws_s3.AwsS3Credential{
-						Region:          "mock-region",
-						AccessKeyId:     "mock-access-key-id",
-						SecretAccessKey: "",
-					},
-				}
-				s, err := aws_s3.NewAwsS3Storage(cfg)
-
-				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 secret access key")))
-				Expect(s).To(BeNil())
-			})
-		})
-
-		When("bucket name is invalid", func() {
-			It("should return error", func() {
-				cfg := &aws_s3.AwsS3Config{
-					Credential: &aws_s3.AwsS3Credential{
-						Region:          "mock-region",
-						AccessKeyId:     "mock-access-key-id",
-						SecretAccessKey: "mock-secret-access-key",
-					},
-				}
-				s, err := aws_s3.NewAwsS3Storage(cfg)
-
-				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 bucket name")))
 				Expect(s).To(BeNil())
 			})
 		})
@@ -177,14 +168,12 @@ var _ = Describe("Storage", func() {
 		BeforeEach(func() {
 			ctrl := gomock.NewController(t)
 			cl = aws_s3.NewMockAwsS3Client(ctrl)
-			cfg = &aws_s3.AwsS3Config{
-				BucketName: "mock-bucket-name",
-				Credential: &aws_s3.AwsS3Credential{
-					Region:          "mock-region",
-					AccessKeyId:     "mock-access-key-id",
-					SecretAccessKey: "mock-secret-access-key",
-				},
-			}
+			cfg, _ = aws_s3.NewAwsS3Config(
+				"mock-region",
+				"mock-access-key-id",
+				"mock-secret-access-key",
+				"mock-bucket-name",
+			)
 			storage, _ := aws_s3.NewAwsS3Storage(cfg)
 			storage.Client = cl
 			s = storage
@@ -243,14 +232,12 @@ var _ = Describe("Storage", func() {
 		BeforeEach(func() {
 			ctrl := gomock.NewController(t)
 			cl = aws_s3.NewMockAwsS3Client(ctrl)
-			cfg = &aws_s3.AwsS3Config{
-				BucketName: "mock-bucket-name",
-				Credential: &aws_s3.AwsS3Credential{
-					Region:          "mock-region",
-					AccessKeyId:     "mock-access-key-id",
-					SecretAccessKey: "mock-secret-access-key",
-				},
-			}
+			cfg, _ = aws_s3.NewAwsS3Config(
+				"mock-region",
+				"mock-access-key-id",
+				"mock-secret-access-key",
+				"mock-bucket-name",
+			)
 			storage, _ := aws_s3.NewAwsS3Storage(cfg)
 			storage.Client = cl
 			s = storage

@@ -17,7 +17,7 @@ type AwsS3Credential struct {
 }
 
 type AwsS3Config struct {
-	Credential *AwsS3Credential
+	Credential AwsS3Credential
 	BucketName string
 }
 
@@ -28,13 +28,13 @@ type AwsS3Client interface {
 
 type AwsS3Storage struct {
 	Client AwsS3Client
-	Config *AwsS3Config
+	config *AwsS3Config
 }
 
 func (s *AwsS3Storage) UploadFile(p goseidon.UploadFileParam) (*goseidon.UploadFileResult, error) {
 	_, err := s.Client.PutObject(&s3.PutObjectInput{
 		Body:   bytes.NewReader(p.FileData),
-		Bucket: aws.String(s.Config.BucketName),
+		Bucket: aws.String(s.config.BucketName),
 		Key:    aws.String(p.FileName),
 	})
 	if err != nil {
@@ -49,7 +49,7 @@ func (s *AwsS3Storage) UploadFile(p goseidon.UploadFileParam) (*goseidon.UploadF
 func (s *AwsS3Storage) RetrieveFile(p goseidon.RetrieveFileParam) (*goseidon.RetrieveFileResult, error) {
 	out, err := s.Client.GetObject(&s3.GetObjectInput{
 		Key:    aws.String(p.Id),
-		Bucket: aws.String(s.Config.BucketName),
+		Bucket: aws.String(s.config.BucketName),
 	})
 	if err != nil {
 		return nil, err
@@ -81,31 +81,40 @@ func NewAwsS3Client(cr AwsS3Credential) (AwsS3Client, error) {
 	return client, nil
 }
 
+func NewAwsS3Config(region, accessKey, secretKey, bucketName string) (*AwsS3Config, error) {
+	if region == "" {
+		return nil, fmt.Errorf("invalid aws s3 region")
+	}
+	if accessKey == "" {
+		return nil, fmt.Errorf("invalid aws s3 access key")
+	}
+	if secretKey == "" {
+		return nil, fmt.Errorf("invalid aws s3 secret access key")
+	}
+	if bucketName == "" {
+		return nil, fmt.Errorf("invalid aws s3 bucket name")
+	}
+	c := &AwsS3Config{
+		Credential: AwsS3Credential{
+			Region:          region,
+			AccessKeyId:     accessKey,
+			SecretAccessKey: secretKey,
+		},
+		BucketName: bucketName,
+	}
+	return c, nil
+}
+
 func NewAwsS3Storage(c *AwsS3Config) (*AwsS3Storage, error) {
 	if c == nil {
 		return nil, fmt.Errorf("invalid aws s3 config")
 	}
-	if c.Credential == nil {
-		return nil, fmt.Errorf("invalid aws s3 credential")
-	}
-	if c.Credential.Region == "" {
-		return nil, fmt.Errorf("invalid aws s3 region")
-	}
-	if c.Credential.AccessKeyId == "" {
-		return nil, fmt.Errorf("invalid aws s3 access key")
-	}
-	if c.Credential.SecretAccessKey == "" {
-		return nil, fmt.Errorf("invalid aws s3 secret access key")
-	}
-	if c.BucketName == "" {
-		return nil, fmt.Errorf("invalid aws s3 bucket name")
-	}
 
-	cl, _ := NewAwsS3Client(*c.Credential)
+	cl, _ := NewAwsS3Client(c.Credential)
 
 	storage := &AwsS3Storage{
 		Client: cl,
-		Config: c,
+		config: c,
 	}
 	return storage, nil
 }
