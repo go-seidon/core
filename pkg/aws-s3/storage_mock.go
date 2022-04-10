@@ -34,6 +34,21 @@ func (m *MockAwsS3Client) EXPECT() *MockAwsS3ClientMockRecorder {
 	return m.recorder
 }
 
+// DeleteObject mocks base method.
+func (m *MockAwsS3Client) DeleteObject(arg0 *s3.DeleteObjectInput) (*s3.DeleteObjectOutput, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteObject", arg0)
+	ret0, _ := ret[0].(*s3.DeleteObjectOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteObject indicates an expected call of DeleteObject.
+func (mr *MockAwsS3ClientMockRecorder) DeleteObject(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteObject", reflect.TypeOf((*MockAwsS3Client)(nil).DeleteObject), arg0)
+}
+
 // GetObject mocks base method.
 func (m *MockAwsS3Client) GetObject(arg0 *s3.GetObjectInput) (*s3.GetObjectOutput, error) {
 	m.ctrl.T.Helper()

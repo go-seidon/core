@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -24,6 +25,7 @@ type AwsS3Config struct {
 type AwsS3Client interface {
 	PutObject(*s3.PutObjectInput) (*s3.PutObjectOutput, error)
 	GetObject(*s3.GetObjectInput) (*s3.GetObjectOutput, error)
+	DeleteObject(*s3.DeleteObjectInput) (*s3.DeleteObjectOutput, error)
 }
 
 type AwsS3Storage struct {
@@ -62,6 +64,22 @@ func (s *AwsS3Storage) RetrieveFile(p goseidon.RetrieveFileParam) (*goseidon.Ret
 
 	res := &goseidon.RetrieveFileResult{
 		File: fileData,
+	}
+	return res, nil
+}
+
+func (s *AwsS3Storage) DeleteFile(p goseidon.DeleteFileParam) (*goseidon.DeleteFileResult, error) {
+	_, err := s.Client.DeleteObject(&s3.DeleteObjectInput{
+		Bucket: aws.String(s.config.BucketName),
+		Key:    aws.String(p.Id),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	res := &goseidon.DeleteFileResult{
+		Id:        p.Id,
+		DeletedAt: time.Now(),
 	}
 	return res, nil
 }

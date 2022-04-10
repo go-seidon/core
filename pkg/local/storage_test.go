@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"testing"
+	"time"
 
 	goseidon "github.com/go-seidon/core"
 	"github.com/go-seidon/core/internal/io"
@@ -299,5 +300,86 @@ var _ = Describe("Storage", func() {
 				Expect(err).To(BeNil())
 			})
 		})
+	})
+
+	Context("DeleteFile method", func() {
+		var (
+			s  goseidon.Storage
+			p  goseidon.DeleteFileParam
+			c  *local.LocalConfig
+			fm *io.MockFileManager
+		)
+
+		BeforeEach(func() {
+			p = goseidon.DeleteFileParam{
+				Id: "unique-access-id",
+			}
+			c = &local.LocalConfig{
+				StorageDir: "storage",
+			}
+			t := GinkgoT()
+			ctrl := gomock.NewController(t)
+			fm = io.NewMockFileManager(ctrl)
+			storage, _ := local.NewLocalStorage(c)
+			storage.FileManager = fm
+			s = storage
+		})
+
+		When("file is not found", func() {
+			It("should return error", func() {
+				fm.EXPECT().
+					IsExists(gomock.Eq(c.StorageDir + "/" + p.Id)).
+					Return(false).
+					Times(1)
+
+				res, err := s.DeleteFile(p)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("file is not found")))
+			})
+		})
+
+		When("failed remove file", func() {
+			It("should return error", func() {
+				fm.EXPECT().
+					IsExists(gomock.Eq(c.StorageDir + "/" + p.Id)).
+					Return(true).
+					Times(1)
+
+				fm.EXPECT().
+					RemoveFile(gomock.Eq(c.StorageDir + "/" + p.Id)).
+					Return(fmt.Errorf("invalid permission")).
+					Times(1)
+
+				res, err := s.DeleteFile(p)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("failed delete file")))
+			})
+		})
+
+		When("success remove file", func() {
+			It("should return result", func() {
+				currentTime := time.Now()
+
+				fm.EXPECT().
+					IsExists(gomock.Eq(c.StorageDir + "/" + p.Id)).
+					Return(true).
+					Times(1)
+
+				fm.EXPECT().
+					RemoveFile(gomock.Eq(c.StorageDir + "/" + p.Id)).
+					Return(nil).
+					Times(1)
+
+				res, err := s.DeleteFile(p)
+
+				isAfterOrEqual := res.DeletedAt.After(currentTime) || res.DeletedAt.Equal(currentTime)
+				Expect(res.Id).To(Equal(p.Id))
+				Expect(isAfterOrEqual).To(BeTrue())
+				Expect(err).To(BeNil())
+			})
+		})
+
 	})
 })

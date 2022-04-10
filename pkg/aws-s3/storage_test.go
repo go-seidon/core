@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -310,6 +311,75 @@ var _ = Describe("Storage", func() {
 				Expect(err).To(BeNil())
 			})
 		})
+	})
+
+	Context("DeleteFile method", func() {
+		var (
+			s   goseidon.Storage
+			p   goseidon.DeleteFileParam
+			cl  *aws_s3.MockAwsS3Client
+			cfg *aws_s3.AwsS3Config
+		)
+
+		BeforeEach(func() {
+			p = goseidon.DeleteFileParam{
+				Id: "mock-file-id",
+			}
+			ctrl := gomock.NewController(t)
+			cl = aws_s3.NewMockAwsS3Client(ctrl)
+			cfg, _ = aws_s3.NewAwsS3Config(
+				"mock-region",
+				"mock-access-key-id",
+				"mock-secret-access-key",
+				"mock-bucket-name",
+			)
+			storage, _ := aws_s3.NewAwsS3Storage(cfg)
+			storage.Client = cl
+			s = storage
+		})
+
+		When("failed delete file", func() {
+			It("should return error", func() {
+				param := &s3.DeleteObjectInput{
+					Key:    aws.String(p.Id),
+					Bucket: aws.String(cfg.BucketName),
+				}
+
+				cl.EXPECT().
+					DeleteObject(gomock.Eq(param)).
+					Return(nil, fmt.Errorf("failed delete file")).
+					Times(1)
+
+				res, err := s.DeleteFile(p)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("failed delete file")))
+			})
+		})
+
+		When("success delete file", func() {
+			It("should return error", func() {
+				currentTime := time.Now()
+
+				param := &s3.DeleteObjectInput{
+					Key:    aws.String(p.Id),
+					Bucket: aws.String(cfg.BucketName),
+				}
+
+				cl.EXPECT().
+					DeleteObject(gomock.Eq(param)).
+					Return(nil, nil).
+					Times(1)
+
+				res, err := s.DeleteFile(p)
+
+				isAfterOrEqual := res.DeletedAt.After(currentTime) || res.DeletedAt.Equal(currentTime)
+				Expect(res.Id).To(Equal(p.Id))
+				Expect(isAfterOrEqual).To(BeTrue())
+				Expect(err).To(BeNil())
+			})
+		})
+
 	})
 })
 
