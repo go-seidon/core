@@ -15,29 +15,30 @@ type FileManager interface {
 	WriteFile(name string, data []byte, perm fs.FileMode) error
 	Open(path string) (*os.File, error)
 	ReadFile(file *os.File) ([]byte, error)
+	RemoveFile(path string) error
 }
 
 type fileManager struct {
 }
 
-func (s *fileManager) IsExists(path string) bool {
+func (fm *fileManager) IsExists(path string) bool {
 	_, err := os.Stat(path)
 	return !errors.Is(err, os.ErrNotExist)
 }
 
-func (s *fileManager) CreateDir(path string, perm fs.FileMode) error {
+func (fm *fileManager) CreateDir(path string, perm fs.FileMode) error {
 	return os.MkdirAll(path, perm)
 }
 
-func (s *fileManager) WriteFile(name string, data []byte, perm fs.FileMode) error {
+func (fm *fileManager) WriteFile(name string, data []byte, perm fs.FileMode) error {
 	return os.WriteFile(name, data, perm)
 }
 
-func (s *fileManager) Open(path string) (*os.File, error) {
+func (fm *fileManager) Open(path string) (*os.File, error) {
 	return os.Open(path)
 }
 
-func (s *fileManager) ReadFile(file *os.File) ([]byte, error) {
+func (fm *fileManager) ReadFile(file *os.File) ([]byte, error) {
 	if file == nil {
 		return nil, fmt.Errorf("invalid file")
 	}
@@ -48,6 +49,10 @@ func (s *fileManager) ReadFile(file *os.File) ([]byte, error) {
 		return nil, err
 	}
 	return bytes, nil
+}
+
+func (fm *fileManager) RemoveFile(path string) error {
+	return os.Remove(path)
 }
 
 func NewFileManager() (FileManager, error) {
