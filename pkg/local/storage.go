@@ -14,18 +14,26 @@ type LocalConfig struct {
 }
 
 type LocalStorage struct {
-	Config      *LocalConfig
-	FileManager io.FileManagerService
+	config      *LocalConfig
+	FileManager io.FileManager
 }
 
 func (s *LocalStorage) UploadFile(p goseidon.UploadFileParam) (*goseidon.UploadFileResult, error) {
-	path := fmt.Sprintf("%s/%s", s.Config.StorageDir, p.FileName)
-	if s.FileManager.IsFileExists(path) {
+	rwPermission := fs.FileMode(0644)
+
+	if !s.FileManager.IsExists(s.config.StorageDir) {
+		err := s.FileManager.CreateDir(s.config.StorageDir, rwPermission)
+		if err != nil {
+			return nil, fmt.Errorf("failed create storage dir: %s", s.config.StorageDir)
+		}
+	}
+
+	path := fmt.Sprintf("%s/%s", s.config.StorageDir, p.FileName)
+	if s.FileManager.IsExists(path) {
 		return nil, fmt.Errorf("file already exists")
 	}
 
-	permission := fs.FileMode(0644)
-	err := s.FileManager.WriteFile(path, p.FileData, permission)
+	err := s.FileManager.WriteFile(path, p.FileData, rwPermission)
 	if err != nil {
 		return nil, fmt.Errorf("failed storing file")
 	}
@@ -37,8 +45,8 @@ func (s *LocalStorage) UploadFile(p goseidon.UploadFileParam) (*goseidon.UploadF
 }
 
 func (s *LocalStorage) RetrieveFile(p goseidon.RetrieveFileParam) (*goseidon.RetrieveFileResult, error) {
-	path := fmt.Sprintf("%s/%s", s.Config.StorageDir, p.Id)
-	if !s.FileManager.IsFileExists(path) {
+	path := fmt.Sprintf("%s/%s", s.config.StorageDir, p.Id)
+	if !s.FileManager.IsExists(path) {
 		return nil, fmt.Errorf("file is not found")
 	}
 
@@ -65,7 +73,7 @@ func NewLocalStorage(c *LocalConfig) (*LocalStorage, error) {
 	}
 	fm, _ := io.NewFileManager()
 	s := &LocalStorage{
-		Config:      c,
+		config:      c,
 		FileManager: fm,
 	}
 	return s, nil
