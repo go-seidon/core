@@ -103,6 +103,31 @@ var _ = Describe("Storage", func() {
 
 	})
 
+	Context("NewAwsS3Client function", func() {
+		When("success create client", func() {
+			It("should return aws s3 client", func() {
+				cr := aws_s3.AwsS3Credential{}
+
+				cl, err := aws_s3.NewAwsS3Client(cr)
+
+				Expect(err).To(BeNil())
+				Expect(cl).ToNot(BeNil())
+			})
+		})
+
+		When("failed create session", func() {
+			It("should return error", func() {
+				os.Setenv("AWS_SDK_LOAD_CONFIG", "true")
+				os.Setenv("AWS_S3_USE_ARN_REGION", "invalid_value")
+				cr := aws_s3.AwsS3Credential{}
+				cl, err := aws_s3.NewAwsS3Client(cr)
+
+				Expect(err).To(Equal(fmt.Errorf("failed to load environment config, invalid value for environment variable, AWS_S3_USE_ARN_REGION=invalid_value, need true or false")))
+				Expect(cl).To(BeNil())
+			})
+		})
+	})
+
 	Context("NewAwsS3Storage function", func() {
 		When("all param is valid", func() {
 			It("should return aws_s3 storage", func() {
@@ -128,31 +153,6 @@ var _ = Describe("Storage", func() {
 
 				Expect(err).To(Equal(fmt.Errorf("invalid aws s3 config")))
 				Expect(s).To(BeNil())
-			})
-		})
-
-	})
-
-	Context("NewAwsS3Client function", func() {
-		When("success create client", func() {
-			It("should return aws s3 client", func() {
-				cr := aws_s3.AwsS3Credential{}
-				cl, err := aws_s3.NewAwsS3Client(cr)
-
-				Expect(err).To(BeNil())
-				Expect(cl).ToNot(BeNil())
-			})
-		})
-
-		When("failed create session", func() {
-			It("should return error", func() {
-				os.Setenv("AWS_SDK_LOAD_CONFIG", "true")
-				os.Setenv("AWS_S3_USE_ARN_REGION", "invalid_value")
-				cr := aws_s3.AwsS3Credential{}
-				cl, err := aws_s3.NewAwsS3Client(cr)
-
-				Expect(err).To(Equal(fmt.Errorf("failed to load environment config, invalid value for environment variable, AWS_S3_USE_ARN_REGION=invalid_value, need true or false")))
-				Expect(cl).To(BeNil())
 			})
 		})
 	})

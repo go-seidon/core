@@ -67,18 +67,18 @@ func (s *AwsS3Storage) RetrieveFile(p goseidon.RetrieveFileParam) (*goseidon.Ret
 }
 
 func NewAwsS3Client(cr AwsS3Credential) (AwsS3Client, error) {
-	awsCfg := &aws.Config{
+	config := &aws.Config{
 		Region: aws.String(cr.Region),
 		Credentials: credentials.NewStaticCredentials(
 			cr.AccessKeyId, cr.SecretAccessKey, "",
 		),
 	}
-	session, err := session.NewSession(awsCfg)
+	session, err := session.NewSession(config)
 	if err != nil {
 		return nil, err
 	}
-	client := s3.New(session)
-	return client, nil
+	Client := s3.New(session)
+	return Client, nil
 }
 
 func NewAwsS3Config(region, accessKey, secretKey, bucketName string) (*AwsS3Config, error) {
