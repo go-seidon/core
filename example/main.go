@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 
@@ -54,7 +55,8 @@ func main() {
 	fileData := make([]byte, fileSize)
 	osFile.Read(fileData)
 
-	uploadRes, err := storage.UploadFile(goseidon.UploadFileParam{
+	ctx := context.Background()
+	uploadRes, err := storage.UploadFile(ctx, goseidon.UploadFileParam{
 		FileName: fileInfo.Name(),
 		FileData: fileData,
 		FileSize: fileSize,
@@ -64,7 +66,7 @@ func main() {
 	}
 	fmt.Println("Upload Result => ", uploadRes)
 
-	retrieveRes, err := storage.RetrieveFile(goseidon.RetrieveFileParam{
+	retrieveRes, err := storage.RetrieveFile(ctx, goseidon.RetrieveFileParam{
 		Id: fileInfo.Name(),
 	})
 	if err != nil {
@@ -80,7 +82,7 @@ func main() {
 	fmt.Println("Press any key to delete the uploaded file...")
 	fmt.Scanln()
 
-	deleteRes, err := storage.DeleteFile(goseidon.DeleteFileParam{
+	deleteRes, err := storage.DeleteFile(ctx, goseidon.DeleteFileParam{
 		Id: fileInfo.Name(),
 	})
 	if err != nil {

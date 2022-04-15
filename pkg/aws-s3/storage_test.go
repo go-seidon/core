@@ -2,6 +2,7 @@ package aws_s3_test
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -160,6 +161,7 @@ var _ = Describe("Storage", func() {
 
 	Context("UploadFile method", func() {
 		var (
+			ctx context.Context
 			s   goseidon.Storage
 			p   goseidon.UploadFileParam
 			cl  *aws_s3.MockAwsS3Client
@@ -167,6 +169,7 @@ var _ = Describe("Storage", func() {
 		)
 
 		BeforeEach(func() {
+			ctx = context.Background()
 			ctrl := gomock.NewController(t)
 			cl = aws_s3.NewMockAwsS3Client(ctrl)
 			cfg, _ = aws_s3.NewAwsS3Config(
@@ -181,6 +184,15 @@ var _ = Describe("Storage", func() {
 			p = goseidon.UploadFileParam{}
 		})
 
+		When("context is invalid", func() {
+			It("should return error", func() {
+				res, err := s.UploadFile(nil, p)
+
+				Expect(res).To(BeNil())
+				Expect(err.Error()).To(Equal("invalid context"))
+			})
+		})
+
 		When("failed upload file", func() {
 			It("should return error", func() {
 				param := &s3.PutObjectInput{
@@ -192,7 +204,7 @@ var _ = Describe("Storage", func() {
 					PutObject(gomock.Eq(param)).
 					Return(nil, fmt.Errorf("failed upload file")).
 					Times(1)
-				res, err := s.UploadFile(p)
+				res, err := s.UploadFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err.Error()).To(Equal("failed upload file"))
@@ -211,7 +223,7 @@ var _ = Describe("Storage", func() {
 					PutObject(gomock.Eq(param)).
 					Return(out, nil).
 					Times(1)
-				res, err := s.UploadFile(p)
+				res, err := s.UploadFile(ctx, p)
 
 				eRes := &goseidon.UploadFileResult{
 					FileName: p.FileName,
@@ -224,6 +236,7 @@ var _ = Describe("Storage", func() {
 
 	Context("RetrieveFile method", func() {
 		var (
+			ctx context.Context
 			s   goseidon.Storage
 			p   goseidon.RetrieveFileParam
 			cl  *aws_s3.MockAwsS3Client
@@ -231,6 +244,7 @@ var _ = Describe("Storage", func() {
 		)
 
 		BeforeEach(func() {
+			ctx = context.Background()
 			ctrl := gomock.NewController(t)
 			cl = aws_s3.NewMockAwsS3Client(ctrl)
 			cfg, _ = aws_s3.NewAwsS3Config(
@@ -247,6 +261,15 @@ var _ = Describe("Storage", func() {
 			}
 		})
 
+		When("context is invalid", func() {
+			It("should return error", func() {
+				res, err := s.RetrieveFile(nil, p)
+
+				Expect(res).To(BeNil())
+				Expect(err.Error()).To(Equal("invalid context"))
+			})
+		})
+
 		When("failed retrieve file", func() {
 			It("should return error", func() {
 				param := &s3.GetObjectInput{
@@ -257,7 +280,7 @@ var _ = Describe("Storage", func() {
 					GetObject(gomock.Eq(param)).
 					Return(nil, fmt.Errorf("failed retrieve file")).
 					Times(1)
-				res, err := s.RetrieveFile(p)
+				res, err := s.RetrieveFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err.Error()).To(Equal("failed retrieve file"))
@@ -281,7 +304,7 @@ var _ = Describe("Storage", func() {
 					Return(out, nil).
 					Times(1)
 
-				res, err := s.RetrieveFile(p)
+				res, err := s.RetrieveFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err.Error()).To(Equal("failed read file"))
@@ -302,7 +325,7 @@ var _ = Describe("Storage", func() {
 					GetObject(gomock.Eq(param)).
 					Return(out, nil).
 					Times(1)
-				res, err := s.RetrieveFile(p)
+				res, err := s.RetrieveFile(ctx, p)
 
 				eRes := &goseidon.RetrieveFileResult{
 					File: []byte{},
@@ -315,6 +338,7 @@ var _ = Describe("Storage", func() {
 
 	Context("DeleteFile method", func() {
 		var (
+			ctx context.Context
 			s   goseidon.Storage
 			p   goseidon.DeleteFileParam
 			cl  *aws_s3.MockAwsS3Client
@@ -322,6 +346,7 @@ var _ = Describe("Storage", func() {
 		)
 
 		BeforeEach(func() {
+			ctx = context.Background()
 			p = goseidon.DeleteFileParam{
 				Id: "mock-file-id",
 			}
@@ -338,6 +363,15 @@ var _ = Describe("Storage", func() {
 			s = storage
 		})
 
+		When("context is invalid", func() {
+			It("should return error", func() {
+				res, err := s.DeleteFile(nil, p)
+
+				Expect(res).To(BeNil())
+				Expect(err.Error()).To(Equal("invalid context"))
+			})
+		})
+
 		When("failed delete file", func() {
 			It("should return error", func() {
 				param := &s3.DeleteObjectInput{
@@ -350,7 +384,7 @@ var _ = Describe("Storage", func() {
 					Return(nil, fmt.Errorf("failed delete file")).
 					Times(1)
 
-				res, err := s.DeleteFile(p)
+				res, err := s.DeleteFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("failed delete file")))
@@ -371,7 +405,7 @@ var _ = Describe("Storage", func() {
 					Return(nil, nil).
 					Times(1)
 
-				res, err := s.DeleteFile(p)
+				res, err := s.DeleteFile(ctx, p)
 
 				isAfterOrEqual := res.DeletedAt.After(currentTime) || res.DeletedAt.Equal(currentTime)
 				Expect(res.Id).To(Equal(p.Id))
