@@ -1,6 +1,9 @@
 package goseidon
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 type BinaryFile = []byte
 
@@ -15,7 +18,7 @@ type UploadFileResult struct {
 }
 
 type Uploader interface {
-	UploadFile(p UploadFileParam) (*UploadFileResult, error)
+	UploadFile(ctx context.Context, p UploadFileParam) (*UploadFileResult, error)
 }
 
 type RetrieveFileParam struct {
@@ -27,7 +30,7 @@ type RetrieveFileResult struct {
 }
 
 type Retriever interface {
-	RetrieveFile(p RetrieveFileParam) (*RetrieveFileResult, error)
+	RetrieveFile(ctx context.Context, p RetrieveFileParam) (*RetrieveFileResult, error)
 }
 
 type DeleteFileParam struct {
@@ -40,7 +43,7 @@ type DeleteFileResult struct {
 }
 
 type Deleter interface {
-	DeleteFile(p DeleteFileParam) (*DeleteFileResult, error)
+	DeleteFile(ctx context.Context, p DeleteFileParam) (*DeleteFileResult, error)
 }
 
 type Storage interface {

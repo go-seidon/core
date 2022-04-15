@@ -1,6 +1,7 @@
 package local_test
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
 	"os"
@@ -76,13 +77,15 @@ var _ = Describe("Storage", func() {
 
 	Context("UploadFile method", func() {
 		var (
-			s  goseidon.Storage
-			p  goseidon.UploadFileParam
-			c  *local.LocalConfig
-			fm *io.MockFileManager
+			ctx context.Context
+			s   goseidon.Storage
+			p   goseidon.UploadFileParam
+			c   *local.LocalConfig
+			fm  *io.MockFileManager
 		)
 
 		BeforeEach(func() {
+			ctx = context.Background()
 			p = goseidon.UploadFileParam{
 				FileName: "image.jpg",
 				FileData: make([]byte, 1),
@@ -98,6 +101,15 @@ var _ = Describe("Storage", func() {
 			s = storage
 		})
 
+		When("context is invalid", func() {
+			It("should return error", func() {
+				res, err := s.UploadFile(nil, p)
+
+				Expect(res).To(BeNil())
+				Expect(err.Error()).To(Equal("invalid context"))
+			})
+		})
+
 		When("failed create storage dir", func() {
 			It("should return error", func() {
 				fm.EXPECT().
@@ -110,7 +122,7 @@ var _ = Describe("Storage", func() {
 					Return(fmt.Errorf("invalid storage dir")).
 					Times(1)
 
-				res, err := s.UploadFile(p)
+				res, err := s.UploadFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("failed create storage dir: %s", c.StorageDir)))
@@ -129,7 +141,7 @@ var _ = Describe("Storage", func() {
 					Return(true).
 					Times(1)
 
-				res, err := s.UploadFile(p)
+				res, err := s.UploadFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("file already exists")))
@@ -156,7 +168,7 @@ var _ = Describe("Storage", func() {
 					).
 					Return(fmt.Errorf("access denied")).
 					Times(1)
-				res, err := s.UploadFile(p)
+				res, err := s.UploadFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("failed storing file")))
@@ -183,7 +195,7 @@ var _ = Describe("Storage", func() {
 					).
 					Return(nil).
 					Times(1)
-				res, err := s.UploadFile(p)
+				res, err := s.UploadFile(ctx, p)
 
 				eRes := &goseidon.UploadFileResult{FileName: p.FileName}
 				Expect(res).To(Equal(eRes))
@@ -194,13 +206,15 @@ var _ = Describe("Storage", func() {
 
 	Context("RetrieveFile method", func() {
 		var (
-			s  goseidon.Storage
-			p  goseidon.RetrieveFileParam
-			c  *local.LocalConfig
-			fm *io.MockFileManager
+			ctx context.Context
+			s   goseidon.Storage
+			p   goseidon.RetrieveFileParam
+			c   *local.LocalConfig
+			fm  *io.MockFileManager
 		)
 
 		BeforeEach(func() {
+			ctx = context.Background()
 			p = goseidon.RetrieveFileParam{
 				Id: "unique-access-id",
 			}
@@ -215,13 +229,22 @@ var _ = Describe("Storage", func() {
 			s = storage
 		})
 
+		When("context is invalid", func() {
+			It("should return error", func() {
+				res, err := s.RetrieveFile(nil, p)
+
+				Expect(res).To(BeNil())
+				Expect(err.Error()).To(Equal("invalid context"))
+			})
+		})
+
 		When("file is not available", func() {
 			It("should return error", func() {
 				fm.EXPECT().
 					IsExists(gomock.Eq(c.StorageDir + "/" + p.Id)).
 					Return(false).
 					Times(1)
-				res, err := s.RetrieveFile(p)
+				res, err := s.RetrieveFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("file is not found")))
@@ -240,7 +263,7 @@ var _ = Describe("Storage", func() {
 					Return(nil, fmt.Errorf("access denied")).
 					Times(1)
 
-				res, err := s.RetrieveFile(p)
+				res, err := s.RetrieveFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("failed open file")))
@@ -265,7 +288,7 @@ var _ = Describe("Storage", func() {
 					Return(nil, fmt.Errorf("failed read file")).
 					Times(1)
 
-				res, err := s.RetrieveFile(p)
+				res, err := s.RetrieveFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("failed read file")))
@@ -291,7 +314,7 @@ var _ = Describe("Storage", func() {
 					Return(binFile, nil).
 					Times(1)
 
-				res, err := s.RetrieveFile(p)
+				res, err := s.RetrieveFile(ctx, p)
 
 				eRes := &goseidon.RetrieveFileResult{
 					File: binFile,
@@ -304,13 +327,15 @@ var _ = Describe("Storage", func() {
 
 	Context("DeleteFile method", func() {
 		var (
-			s  goseidon.Storage
-			p  goseidon.DeleteFileParam
-			c  *local.LocalConfig
-			fm *io.MockFileManager
+			ctx context.Context
+			s   goseidon.Storage
+			p   goseidon.DeleteFileParam
+			c   *local.LocalConfig
+			fm  *io.MockFileManager
 		)
 
 		BeforeEach(func() {
+			ctx = context.Background()
 			p = goseidon.DeleteFileParam{
 				Id: "unique-access-id",
 			}
@@ -325,6 +350,15 @@ var _ = Describe("Storage", func() {
 			s = storage
 		})
 
+		When("context is invalid", func() {
+			It("should return error", func() {
+				res, err := s.DeleteFile(nil, p)
+
+				Expect(res).To(BeNil())
+				Expect(err.Error()).To(Equal("invalid context"))
+			})
+		})
+
 		When("file is not found", func() {
 			It("should return error", func() {
 				fm.EXPECT().
@@ -332,7 +366,7 @@ var _ = Describe("Storage", func() {
 					Return(false).
 					Times(1)
 
-				res, err := s.DeleteFile(p)
+				res, err := s.DeleteFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("file is not found")))
@@ -351,7 +385,7 @@ var _ = Describe("Storage", func() {
 					Return(fmt.Errorf("invalid permission")).
 					Times(1)
 
-				res, err := s.DeleteFile(p)
+				res, err := s.DeleteFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("failed delete file")))
@@ -372,7 +406,7 @@ var _ = Describe("Storage", func() {
 					Return(nil).
 					Times(1)
 
-				res, err := s.DeleteFile(p)
+				res, err := s.DeleteFile(ctx, p)
 
 				isAfterOrEqual := res.DeletedAt.After(currentTime) || res.DeletedAt.Equal(currentTime)
 				Expect(res.Id).To(Equal(p.Id))

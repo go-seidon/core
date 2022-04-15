@@ -1,6 +1,7 @@
 package local
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
 	"strings"
@@ -19,7 +20,11 @@ type LocalStorage struct {
 	FileManager io.FileManager
 }
 
-func (s *LocalStorage) UploadFile(p goseidon.UploadFileParam) (*goseidon.UploadFileResult, error) {
+func (s *LocalStorage) UploadFile(ctx context.Context, p goseidon.UploadFileParam) (*goseidon.UploadFileResult, error) {
+	if ctx == nil {
+		return nil, fmt.Errorf("invalid context")
+	}
+
 	rwPermission := fs.FileMode(0644)
 
 	if !s.FileManager.IsExists(s.config.StorageDir) {
@@ -45,7 +50,11 @@ func (s *LocalStorage) UploadFile(p goseidon.UploadFileParam) (*goseidon.UploadF
 	return res, nil
 }
 
-func (s *LocalStorage) RetrieveFile(p goseidon.RetrieveFileParam) (*goseidon.RetrieveFileResult, error) {
+func (s *LocalStorage) RetrieveFile(ctx context.Context, p goseidon.RetrieveFileParam) (*goseidon.RetrieveFileResult, error) {
+	if ctx == nil {
+		return nil, fmt.Errorf("invalid context")
+	}
+
 	path := fmt.Sprintf("%s/%s", s.config.StorageDir, p.Id)
 	if !s.FileManager.IsExists(path) {
 		return nil, fmt.Errorf("file is not found")
@@ -68,7 +77,11 @@ func (s *LocalStorage) RetrieveFile(p goseidon.RetrieveFileParam) (*goseidon.Ret
 	return res, nil
 }
 
-func (s *LocalStorage) DeleteFile(p goseidon.DeleteFileParam) (*goseidon.DeleteFileResult, error) {
+func (s *LocalStorage) DeleteFile(ctx context.Context, p goseidon.DeleteFileParam) (*goseidon.DeleteFileResult, error) {
+	if ctx == nil {
+		return nil, fmt.Errorf("invalid context")
+	}
+
 	path := fmt.Sprintf("%s/%s", s.config.StorageDir, p.Id)
 	if !s.FileManager.IsExists(path) {
 		return nil, fmt.Errorf("file is not found")
