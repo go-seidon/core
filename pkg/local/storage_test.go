@@ -9,6 +9,7 @@ import (
 	"time"
 
 	goseidon "github.com/go-seidon/core"
+	"github.com/go-seidon/core/internal/clock"
 	"github.com/go-seidon/core/internal/io"
 	"github.com/go-seidon/core/pkg/local"
 	"github.com/golang/mock/gomock"
@@ -77,11 +78,13 @@ var _ = Describe("Storage", func() {
 
 	Context("UploadFile method", func() {
 		var (
-			ctx context.Context
-			s   goseidon.Storage
-			p   goseidon.UploadFileParam
-			c   *local.LocalConfig
-			fm  *io.MockFileManager
+			ctx         context.Context
+			s           goseidon.Storage
+			p           goseidon.UploadFileParam
+			c           *local.LocalConfig
+			fm          *io.MockFileManager
+			clo         *clock.MockClock
+			currentTime time.Time
 		)
 
 		BeforeEach(func() {
@@ -96,8 +99,11 @@ var _ = Describe("Storage", func() {
 			t := GinkgoT()
 			ctrl := gomock.NewController(t)
 			fm = io.NewMockFileManager(ctrl)
+			currentTime = time.Now()
+			clo = clock.NewMockClock(ctrl)
 			storage, _ := local.NewLocalStorage(c)
 			storage.FileManager = fm
+			storage.Clock = clo
 			s = storage
 		})
 
@@ -195,9 +201,14 @@ var _ = Describe("Storage", func() {
 					).
 					Return(nil).
 					Times(1)
+				clo.EXPECT().Now().Return(currentTime)
+
 				res, err := s.UploadFile(ctx, p)
 
-				eRes := &goseidon.UploadFileResult{FileName: p.FileName}
+				eRes := &goseidon.UploadFileResult{
+					FileName:   p.FileName,
+					UploadedAt: time.Now(),
+				}
 				Expect(res).To(Equal(eRes))
 				Expect(err).To(BeNil())
 			})

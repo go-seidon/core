@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	goseidon "github.com/go-seidon/core"
+	"github.com/go-seidon/core/internal/clock"
 	aws_s3 "github.com/go-seidon/core/pkg/aws-s3"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
@@ -161,11 +162,13 @@ var _ = Describe("Storage", func() {
 
 	Context("UploadFile method", func() {
 		var (
-			ctx context.Context
-			s   goseidon.Storage
-			p   goseidon.UploadFileParam
-			cl  *aws_s3.MockAwsS3Client
-			cfg *aws_s3.AwsS3Config
+			ctx         context.Context
+			s           goseidon.Storage
+			p           goseidon.UploadFileParam
+			cfg         *aws_s3.AwsS3Config
+			cl          *aws_s3.MockAwsS3Client
+			clo         *clock.MockClock
+			currentTime time.Time
 		)
 
 		BeforeEach(func() {
@@ -178,8 +181,11 @@ var _ = Describe("Storage", func() {
 				"mock-secret-access-key",
 				"mock-bucket-name",
 			)
+			currentTime = time.Now()
+			clo = clock.NewMockClock(ctrl)
 			storage, _ := aws_s3.NewAwsS3Storage(cfg)
 			storage.Client = cl
+			storage.Clock = clo
 			s = storage
 			p = goseidon.UploadFileParam{}
 		})
@@ -223,10 +229,13 @@ var _ = Describe("Storage", func() {
 					PutObject(gomock.Eq(param)).
 					Return(out, nil).
 					Times(1)
+				clo.EXPECT().Now().Return(currentTime)
+
 				res, err := s.UploadFile(ctx, p)
 
 				eRes := &goseidon.UploadFileResult{
-					FileName: p.FileName,
+					FileName:   p.FileName,
+					UploadedAt: currentTime,
 				}
 				Expect(res).To(Equal(eRes))
 				Expect(err).To(BeNil())
