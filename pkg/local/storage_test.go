@@ -207,7 +207,7 @@ var _ = Describe("Storage", func() {
 
 				eRes := &goseidon.UploadFileResult{
 					FileName:   p.FileName,
-					UploadedAt: time.Now(),
+					UploadedAt: currentTime,
 				}
 				Expect(res).To(Equal(eRes))
 				Expect(err).To(BeNil())
