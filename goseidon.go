@@ -14,7 +14,8 @@ type UploadFileParam struct {
 }
 
 type UploadFileResult struct {
-	FileName string
+	FileName   string
+	UploadedAt time.Time
 }
 
 type Uploader interface {

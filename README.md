@@ -15,6 +15,3 @@ Upcoming support:
 
 ## Doc
 See [code example](example/main.go) for the moment 😁
-
-## Todo
-1. add `UploadedAt` on `UploadFileResult`

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	goseidon "github.com/go-seidon/core"
+	"github.com/go-seidon/core/internal/clock"
 	"github.com/go-seidon/core/internal/io"
 )
 
@@ -18,6 +19,7 @@ type LocalConfig struct {
 type LocalStorage struct {
 	config      *LocalConfig
 	FileManager io.FileManager
+	Clock       clock.Clock
 }
 
 func (s *LocalStorage) UploadFile(ctx context.Context, p goseidon.UploadFileParam) (*goseidon.UploadFileResult, error) {
@@ -44,8 +46,10 @@ func (s *LocalStorage) UploadFile(ctx context.Context, p goseidon.UploadFilePara
 		return nil, fmt.Errorf("failed storing file")
 	}
 
+	uploadedAt := s.Clock.Now()
 	res := &goseidon.UploadFileResult{
-		FileName: p.FileName,
+		FileName:   p.FileName,
+		UploadedAt: uploadedAt,
 	}
 	return res, nil
 }
@@ -104,9 +108,11 @@ func NewLocalStorage(c *LocalConfig) (*LocalStorage, error) {
 		return nil, fmt.Errorf("invalid storage config")
 	}
 	fm, _ := io.NewFileManager()
+	clock, _ := clock.NewClock()
 	s := &LocalStorage{
 		config:      c,
 		FileManager: fm,
+		Clock:       clock,
 	}
 	return s, nil
 }

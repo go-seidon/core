@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	goseidon "github.com/go-seidon/core"
+	"github.com/go-seidon/core/internal/clock"
 )
 
 type AwsS3Credential struct {
@@ -30,8 +31,9 @@ type AwsS3Client interface {
 }
 
 type AwsS3Storage struct {
-	Client AwsS3Client
 	config *AwsS3Config
+	Client AwsS3Client
+	Clock  clock.Clock
 }
 
 func (s *AwsS3Storage) UploadFile(ctx context.Context, p goseidon.UploadFileParam) (*goseidon.UploadFileResult, error) {
@@ -47,8 +49,11 @@ func (s *AwsS3Storage) UploadFile(ctx context.Context, p goseidon.UploadFilePara
 	if err != nil {
 		return nil, err
 	}
+
+	uploadedAt := s.Clock.Now()
 	res := &goseidon.UploadFileResult{
-		FileName: p.FileName,
+		FileName:   p.FileName,
+		UploadedAt: uploadedAt,
 	}
 	return res, nil
 }
@@ -142,9 +147,11 @@ func NewAwsS3Storage(c *AwsS3Config) (*AwsS3Storage, error) {
 	}
 
 	cl, _ := NewAwsS3Client(c.Credential)
+	clock, _ := clock.NewClock()
 
 	storage := &AwsS3Storage{
 		Client: cl,
+		Clock:  clock,
 		config: c,
 	}
 	return storage, nil
