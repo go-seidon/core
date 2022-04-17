@@ -290,8 +290,8 @@ var _ = Describe("Storage", func() {
 			s           goseidon.Storage
 			cfg         *g_cloud.GoogleConfig
 			cl          *g_cloud.MockGoogleStorageClient
+			clo         *clock.MockClock
 			p           goseidon.DeleteFileParam
-			clo         clock.Clock
 			currentTime time.Time
 		)
 
@@ -303,7 +303,7 @@ var _ = Describe("Storage", func() {
 			ctrl := gomock.NewController(t)
 			cl = g_cloud.NewMockGoogleStorageClient(ctrl)
 			currentTime = time.Now()
-			clo, _ = clock.NewClock()
+			clo = clock.NewMockClock(ctrl)
 			s = &g_cloud.GoogleStorage{
 				Config: cfg,
 				Client: cl,
@@ -343,6 +343,7 @@ var _ = Describe("Storage", func() {
 					Delete(gomock.Eq(ctx), gomock.Eq(cfg.BucketName), gomock.Eq(p.Id)).
 					Return(nil).
 					Times(1)
+				clo.EXPECT().Now().Return(currentTime).Times(1)
 
 				res, err := s.DeleteFile(ctx, p)
 
