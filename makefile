@@ -38,6 +38,7 @@ generate-mock:
 	mockgen -source pkg/aws-s3/storage.go -destination=pkg/aws-s3/storage_mock.go -package=aws_s3
 	mockgen -source internal/io/client.go -destination=internal/io/client_mock.go -package=io
 	mockgen -source internal/clock/client.go -destination=internal/clock/client_mock.go -package=clock
+	mockgen -source pkg/g-cloud/client.go -destination=pkg/g-cloud/client_mock.go -package=g_cloud
 
 .PHONY: run-example
 run-example:

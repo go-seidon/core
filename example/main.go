@@ -8,6 +8,7 @@ import (
 
 	goseidon "github.com/go-seidon/core"
 	aws_s3 "github.com/go-seidon/core/pkg/aws-s3"
+	g_storage "github.com/go-seidon/core/pkg/g-storage"
 	"github.com/go-seidon/core/pkg/local"
 )
 
@@ -18,6 +19,7 @@ func main() {
 
 	fmt.Println("[1] Local Storage")
 	fmt.Println("[2] AWS S3")
+	fmt.Println("[3] Google Cloud Storage")
 	fmt.Print("Choose your storage provider: ")
 
 	scanner := bufio.NewScanner(os.Stdin)
@@ -33,10 +35,12 @@ func main() {
 		storage = MustCreateLocalStorage()
 	case "2":
 		storage = MustCreateAwsS3Storage()
+	case "3":
+		storage = MustCreateGoogleStorage()
 	default:
 		fmt.Println()
 		fmt.Println("Invalid storage provider")
-		fmt.Println("Please choose between [1, 2]")
+		fmt.Println("Please choose between [1, 2, 3]")
 		return
 	}
 
@@ -124,6 +128,19 @@ func MustCreateAwsS3Storage() goseidon.Storage {
 	)
 
 	storage, err := aws_s3.NewAwsS3Storage(cfg)
+	if err != nil {
+		panic(err)
+	}
+
+	return storage
+}
+
+func MustCreateGoogleStorage() goseidon.Storage {
+	credentialPath := os.Getenv("GCP_CREDENTIAL_PATH")
+	bucketName := os.Getenv("GCP_STORAGE_BUCKET_NAME")
+
+	opt := g_storage.WithCredentialPath(bucketName, credentialPath)
+	storage, err := g_storage.NewGoogleStorage(opt)
 	if err != nil {
 		panic(err)
 	}

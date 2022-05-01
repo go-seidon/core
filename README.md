@@ -6,12 +6,18 @@
 File uploader library for uploading to multiple storage provider
 
 Current support:
-- `aws s3`
 - `local file upload`
+- `aws s3`
+- `g-cloud storage`
 
 Upcoming support:
-- `google storage`
 - `alicloud oss`
 
 ## Doc
 See [code example](example/main.go) for the moment 😁
+
+## Todo
+1. Add `RetrievedAt` in `RetrieveFileResult`
+2. Add `FileId` in `UploadFileParam` & `UploadFileResult` (replace FileName as file identifier)
+3. Refactor storage factory to receive `client` param
+4. Remove `AwsCredential` (flat is better than fat)
