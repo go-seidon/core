@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	goseidon "github.com/go-seidon/core"
+	awsmock "github.com/go-seidon/core/internal/aws"
 	"github.com/go-seidon/core/internal/clock"
 	aws_s3 "github.com/go-seidon/core/pkg/aws-s3"
 	"github.com/golang/mock/gomock"
@@ -135,7 +136,7 @@ var _ = Describe("Storage", func() {
 		When("all param is valid", func() {
 			It("should return aws_s3 storage", func() {
 				ctrl := gomock.NewController(t)
-				cl := aws_s3.NewMockAwsS3Client(ctrl)
+				cl := awsmock.NewMockAwsS3Client(ctrl)
 				cfg, _ := aws_s3.NewAwsS3Config(
 					"mock-region",
 					"mock-access-key-id",
@@ -166,7 +167,7 @@ var _ = Describe("Storage", func() {
 			s           *aws_s3.AwsS3Storage
 			p           goseidon.UploadFileParam
 			cfg         *aws_s3.AwsS3Config
-			cl          *aws_s3.MockAwsS3Client
+			cl          *awsmock.MockAwsS3Client
 			clo         *clock.MockClock
 			currentTime time.Time
 		)
@@ -174,7 +175,7 @@ var _ = Describe("Storage", func() {
 		BeforeEach(func() {
 			ctx = context.Background()
 			ctrl := gomock.NewController(t)
-			cl = aws_s3.NewMockAwsS3Client(ctrl)
+			cl = awsmock.NewMockAwsS3Client(ctrl)
 			cfg, _ = aws_s3.NewAwsS3Config(
 				"mock-region",
 				"mock-access-key-id",
@@ -248,7 +249,7 @@ var _ = Describe("Storage", func() {
 			ctx         context.Context
 			s           *aws_s3.AwsS3Storage
 			p           goseidon.RetrieveFileParam
-			cl          *aws_s3.MockAwsS3Client
+			cl          *awsmock.MockAwsS3Client
 			cfg         *aws_s3.AwsS3Config
 			clo         *clock.MockClock
 			currentTime time.Time
@@ -257,7 +258,7 @@ var _ = Describe("Storage", func() {
 		BeforeEach(func() {
 			ctx = context.Background()
 			ctrl := gomock.NewController(t)
-			cl = aws_s3.NewMockAwsS3Client(ctrl)
+			cl = awsmock.NewMockAwsS3Client(ctrl)
 			cfg, _ = aws_s3.NewAwsS3Config(
 				"mock-region",
 				"mock-access-key-id",
@@ -357,7 +358,7 @@ var _ = Describe("Storage", func() {
 			ctx context.Context
 			s   goseidon.Storage
 			p   goseidon.DeleteFileParam
-			cl  *aws_s3.MockAwsS3Client
+			cl  *awsmock.MockAwsS3Client
 			cfg *aws_s3.AwsS3Config
 		)
 
@@ -367,7 +368,7 @@ var _ = Describe("Storage", func() {
 				Id: "mock-file-id",
 			}
 			ctrl := gomock.NewController(t)
-			cl = aws_s3.NewMockAwsS3Client(ctrl)
+			cl = awsmock.NewMockAwsS3Client(ctrl)
 			cfg, _ = aws_s3.NewAwsS3Config(
 				"mock-region",
 				"mock-access-key-id",
