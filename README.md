@@ -17,5 +17,4 @@ Upcoming support:
 See [code example](example/main.go) for the moment 😁
 
 ## Todo
-1. Refactor storage factory to receive `client` param
-2. Remove `AwsCredential` (flat is better than fat)
+Nothing todo right now
