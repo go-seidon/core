@@ -8,7 +8,7 @@ import (
 
 	goseidon "github.com/go-seidon/core"
 	aws_s3 "github.com/go-seidon/core/pkg/aws-s3"
-	g_cloud "github.com/go-seidon/core/pkg/g-cloud"
+	g_storage "github.com/go-seidon/core/pkg/g-storage"
 	"github.com/go-seidon/core/pkg/local"
 )
 
@@ -136,12 +136,11 @@ func MustCreateAwsS3Storage() goseidon.Storage {
 }
 
 func MustCreateGoogleStorage() goseidon.Storage {
-	projectId := os.Getenv("GCP_PROJECT_ID")
 	credentialPath := os.Getenv("GCP_CREDENTIAL_PATH")
 	bucketName := os.Getenv("GCP_STORAGE_BUCKET_NAME")
-	cfg, _ := g_cloud.NewGoogleConfig(projectId, credentialPath, bucketName)
 
-	storage, err := g_cloud.NewGoogleStorage(cfg)
+	opt := g_storage.WithCredentialPath(bucketName, credentialPath)
+	storage, err := g_storage.NewGoogleStorage(opt)
 	if err != nil {
 		panic(err)
 	}
