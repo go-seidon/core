@@ -17,7 +17,5 @@ Upcoming support:
 See [code example](example/main.go) for the moment 😁
 
 ## Todo
-1. Add `RetrievedAt` in `RetrieveFileResult`
-2. Add `FileId` in `UploadFileParam` & `UploadFileResult` (replace FileName as file identifier)
-3. Refactor storage factory to receive `client` param
-4. Remove `AwsCredential` (flat is better than fat)
+1. Refactor storage factory to receive `client` param
+2. Remove `AwsCredential` (flat is better than fat)

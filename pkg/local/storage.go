@@ -36,7 +36,7 @@ func (s *LocalStorage) UploadFile(ctx context.Context, p goseidon.UploadFilePara
 		}
 	}
 
-	path := fmt.Sprintf("%s/%s", s.config.StorageDir, p.FileName)
+	path := fmt.Sprintf("%s/%s", s.config.StorageDir, p.FileId)
 	if s.FileManager.IsExists(path) {
 		return nil, fmt.Errorf("file already exists")
 	}
@@ -48,6 +48,7 @@ func (s *LocalStorage) UploadFile(ctx context.Context, p goseidon.UploadFilePara
 
 	uploadedAt := s.Clock.Now()
 	res := &goseidon.UploadFileResult{
+		FileId:     p.FileId,
 		FileName:   p.FileName,
 		UploadedAt: uploadedAt,
 	}
@@ -75,8 +76,10 @@ func (s *LocalStorage) RetrieveFile(ctx context.Context, p goseidon.RetrieveFile
 		return nil, err
 	}
 
+	retrievedAt := s.Clock.Now()
 	res := &goseidon.RetrieveFileResult{
-		File: binFile,
+		File:        binFile,
+		RetrievedAt: retrievedAt,
 	}
 	return res, nil
 }

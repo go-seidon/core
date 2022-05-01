@@ -111,7 +111,7 @@ var _ = Describe("Storage", func() {
 		When("failed copy file", func() {
 			It("should return error", func() {
 				cl.EXPECT().
-					NewWriter(gomock.Eq(ctx), gomock.Eq(cfg.BucketName), gomock.Eq(p.FileName)).
+					NewWriter(gomock.Eq(ctx), gomock.Eq(cfg.BucketName), gomock.Eq(p.FileId)).
 					Return(wc).
 					Times(1)
 				buf := bytes.NewBuffer(p.FileData)
@@ -134,7 +134,7 @@ var _ = Describe("Storage", func() {
 					Return(fmt.Errorf("failed close file")).
 					Times(1)
 				cl.EXPECT().
-					NewWriter(gomock.Eq(ctx), gomock.Eq(cfg.BucketName), gomock.Eq(p.FileName)).
+					NewWriter(gomock.Eq(ctx), gomock.Eq(cfg.BucketName), gomock.Eq(p.FileId)).
 					Return(wc).
 					Times(1)
 				buf := bytes.NewBuffer(p.FileData)
@@ -157,7 +157,7 @@ var _ = Describe("Storage", func() {
 					Return(nil).
 					Times(1)
 				cl.EXPECT().
-					NewWriter(gomock.Eq(ctx), gomock.Eq(cfg.BucketName), gomock.Eq(p.FileName)).
+					NewWriter(gomock.Eq(ctx), gomock.Eq(cfg.BucketName), gomock.Eq(p.FileId)).
 					Return(wc).
 					Times(1)
 				buf := bytes.NewBuffer(p.FileData)
@@ -170,6 +170,7 @@ var _ = Describe("Storage", func() {
 				res, err := s.UploadFile(ctx, p)
 
 				eRes := &goseidon.UploadFileResult{
+					FileId:     p.FileId,
 					FileName:   p.FileName,
 					UploadedAt: currentTime,
 				}
@@ -181,13 +182,14 @@ var _ = Describe("Storage", func() {
 
 	Context("RetrieveFile method", func() {
 		var (
-			ctx context.Context
-			s   goseidon.Storage
-			cfg *g_storage.GoogleConfig
-			cl  *g_cloud.MockGoogleStorageClient
-			rc  *g_cloud.MockReadCloser
-			p   goseidon.RetrieveFileParam
-			clo *clock.MockClock
+			ctx         context.Context
+			s           goseidon.Storage
+			cfg         *g_storage.GoogleConfig
+			cl          *g_cloud.MockGoogleStorageClient
+			rc          *g_cloud.MockReadCloser
+			p           goseidon.RetrieveFileParam
+			clo         *clock.MockClock
+			currentTime time.Time
 		)
 
 		BeforeEach(func() {
@@ -200,6 +202,7 @@ var _ = Describe("Storage", func() {
 			cl = g_cloud.NewMockGoogleStorageClient(ctrl)
 			rc = g_cloud.NewMockReadCloser(ctrl)
 			clo = clock.NewMockClock(ctrl)
+			currentTime = time.Now()
 			s = &g_storage.GoogleStorage{
 				Client: cl,
 				Config: cfg,
@@ -267,11 +270,13 @@ var _ = Describe("Storage", func() {
 					NewReader(gomock.Eq(ctx), gomock.Eq(cfg.BucketName), gomock.Eq(p.Id)).
 					Return(rc, nil).
 					Times(1)
+				clo.EXPECT().Now().Return(currentTime)
 
 				res, err := s.RetrieveFile(ctx, p)
 
 				eRes := &goseidon.RetrieveFileResult{
-					File: make([]byte, 1),
+					File:        make([]byte, 1),
+					RetrievedAt: currentTime,
 				}
 				Expect(res).To(Equal(eRes))
 				Expect(err).To(BeNil())

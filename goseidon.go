@@ -9,11 +9,13 @@ type BinaryFile = []byte
 
 type UploadFileParam struct {
 	FileData BinaryFile
+	FileId   string
 	FileName string
 	FileSize int64
 }
 
 type UploadFileResult struct {
+	FileId     string
 	FileName   string
 	UploadedAt time.Time
 }
@@ -27,7 +29,8 @@ type RetrieveFileParam struct {
 }
 
 type RetrieveFileResult struct {
-	File BinaryFile
+	File        BinaryFile
+	RetrievedAt time.Time
 }
 
 type Retriever interface {

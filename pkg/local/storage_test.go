@@ -79,7 +79,7 @@ var _ = Describe("Storage", func() {
 	Context("UploadFile method", func() {
 		var (
 			ctx         context.Context
-			s           goseidon.Storage
+			s           *local.LocalStorage
 			p           goseidon.UploadFileParam
 			c           *local.LocalConfig
 			fm          *io.MockFileManager
@@ -101,10 +101,9 @@ var _ = Describe("Storage", func() {
 			fm = io.NewMockFileManager(ctrl)
 			currentTime = time.Now()
 			clo = clock.NewMockClock(ctrl)
-			storage, _ := local.NewLocalStorage(c)
-			storage.FileManager = fm
-			storage.Clock = clo
-			s = storage
+			s, _ = local.NewLocalStorage(c)
+			s.FileManager = fm
+			s.Clock = clo
 		})
 
 		When("context is invalid", func() {
@@ -143,7 +142,7 @@ var _ = Describe("Storage", func() {
 					Times(1)
 
 				fm.EXPECT().
-					IsExists(gomock.Eq(c.StorageDir + "/" + p.FileName)).
+					IsExists(gomock.Eq(c.StorageDir + "/" + p.FileId)).
 					Return(true).
 					Times(1)
 
@@ -162,13 +161,13 @@ var _ = Describe("Storage", func() {
 					Times(1)
 
 				fm.EXPECT().
-					IsExists(gomock.Eq(c.StorageDir + "/" + p.FileName)).
+					IsExists(gomock.Eq(c.StorageDir + "/" + p.FileId)).
 					Return(false).
 					Times(1)
 
 				fm.EXPECT().
 					WriteFile(
-						gomock.Eq(c.StorageDir+"/"+p.FileName),
+						gomock.Eq(c.StorageDir+"/"+p.FileId),
 						gomock.Eq(make([]byte, 1)),
 						gomock.Eq(fs.FileMode(0644)),
 					).
@@ -189,13 +188,13 @@ var _ = Describe("Storage", func() {
 					Times(1)
 
 				fm.EXPECT().
-					IsExists(gomock.Eq(c.StorageDir + "/" + p.FileName)).
+					IsExists(gomock.Eq(c.StorageDir + "/" + p.FileId)).
 					Return(false).
 					Times(1)
 
 				fm.EXPECT().
 					WriteFile(
-						gomock.Eq(c.StorageDir+"/"+p.FileName),
+						gomock.Eq(c.StorageDir+"/"+p.FileId),
 						gomock.Eq(make([]byte, 1)),
 						gomock.Eq(fs.FileMode(0644)),
 					).
@@ -206,6 +205,7 @@ var _ = Describe("Storage", func() {
 				res, err := s.UploadFile(ctx, p)
 
 				eRes := &goseidon.UploadFileResult{
+					FileId:     p.FileId,
 					FileName:   p.FileName,
 					UploadedAt: currentTime,
 				}
@@ -217,11 +217,13 @@ var _ = Describe("Storage", func() {
 
 	Context("RetrieveFile method", func() {
 		var (
-			ctx context.Context
-			s   goseidon.Storage
-			p   goseidon.RetrieveFileParam
-			c   *local.LocalConfig
-			fm  *io.MockFileManager
+			ctx         context.Context
+			s           *local.LocalStorage
+			p           goseidon.RetrieveFileParam
+			c           *local.LocalConfig
+			clo         *clock.MockClock
+			fm          *io.MockFileManager
+			currentTime time.Time
 		)
 
 		BeforeEach(func() {
@@ -235,9 +237,11 @@ var _ = Describe("Storage", func() {
 			t := GinkgoT()
 			ctrl := gomock.NewController(t)
 			fm = io.NewMockFileManager(ctrl)
-			storage, _ := local.NewLocalStorage(c)
-			storage.FileManager = fm
-			s = storage
+			clo = clock.NewMockClock(ctrl)
+			s, _ = local.NewLocalStorage(c)
+			s.FileManager = fm
+			s.Clock = clo
+			currentTime = time.Now()
 		})
 
 		When("context is invalid", func() {
@@ -325,10 +329,13 @@ var _ = Describe("Storage", func() {
 					Return(binFile, nil).
 					Times(1)
 
+				clo.EXPECT().Now().Return(currentTime)
+
 				res, err := s.RetrieveFile(ctx, p)
 
 				eRes := &goseidon.RetrieveFileResult{
-					File: binFile,
+					File:        binFile,
+					RetrievedAt: currentTime,
 				}
 				Expect(res).To(Equal(eRes))
 				Expect(err).To(BeNil())

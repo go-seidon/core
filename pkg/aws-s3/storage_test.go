@@ -163,7 +163,7 @@ var _ = Describe("Storage", func() {
 	Context("UploadFile method", func() {
 		var (
 			ctx         context.Context
-			s           goseidon.Storage
+			s           *aws_s3.AwsS3Storage
 			p           goseidon.UploadFileParam
 			cfg         *aws_s3.AwsS3Config
 			cl          *aws_s3.MockAwsS3Client
@@ -183,10 +183,9 @@ var _ = Describe("Storage", func() {
 			)
 			currentTime = time.Now()
 			clo = clock.NewMockClock(ctrl)
-			storage, _ := aws_s3.NewAwsS3Storage(cfg)
-			storage.Client = cl
-			storage.Clock = clo
-			s = storage
+			s, _ = aws_s3.NewAwsS3Storage(cfg)
+			s.Client = cl
+			s.Clock = clo
 			p = goseidon.UploadFileParam{}
 		})
 
@@ -204,7 +203,7 @@ var _ = Describe("Storage", func() {
 				param := &s3.PutObjectInput{
 					Body:   bytes.NewReader(p.FileData),
 					Bucket: aws.String(cfg.BucketName),
-					Key:    aws.String(p.FileName),
+					Key:    aws.String(p.FileId),
 				}
 				cl.EXPECT().
 					PutObject(gomock.Eq(param)).
@@ -222,7 +221,7 @@ var _ = Describe("Storage", func() {
 				param := &s3.PutObjectInput{
 					Body:   bytes.NewReader(p.FileData),
 					Bucket: aws.String(cfg.BucketName),
-					Key:    aws.String(p.FileName),
+					Key:    aws.String(p.FileId),
 				}
 				out := &s3.PutObjectOutput{}
 				cl.EXPECT().
@@ -234,6 +233,7 @@ var _ = Describe("Storage", func() {
 				res, err := s.UploadFile(ctx, p)
 
 				eRes := &goseidon.UploadFileResult{
+					FileId:     p.FileId,
 					FileName:   p.FileName,
 					UploadedAt: currentTime,
 				}
@@ -245,11 +245,13 @@ var _ = Describe("Storage", func() {
 
 	Context("RetrieveFile method", func() {
 		var (
-			ctx context.Context
-			s   goseidon.Storage
-			p   goseidon.RetrieveFileParam
-			cl  *aws_s3.MockAwsS3Client
-			cfg *aws_s3.AwsS3Config
+			ctx         context.Context
+			s           *aws_s3.AwsS3Storage
+			p           goseidon.RetrieveFileParam
+			cl          *aws_s3.MockAwsS3Client
+			cfg         *aws_s3.AwsS3Config
+			clo         *clock.MockClock
+			currentTime time.Time
 		)
 
 		BeforeEach(func() {
@@ -262,9 +264,11 @@ var _ = Describe("Storage", func() {
 				"mock-secret-access-key",
 				"mock-bucket-name",
 			)
-			storage, _ := aws_s3.NewAwsS3Storage(cfg)
-			storage.Client = cl
-			s = storage
+			clo = clock.NewMockClock(ctrl)
+			currentTime = time.Now()
+			s, _ = aws_s3.NewAwsS3Storage(cfg)
+			s.Client = cl
+			s.Clock = clo
 			p = goseidon.RetrieveFileParam{
 				Id: "mock-file-id",
 			}
@@ -334,10 +338,13 @@ var _ = Describe("Storage", func() {
 					GetObject(gomock.Eq(param)).
 					Return(out, nil).
 					Times(1)
+				clo.EXPECT().Now().Return(currentTime)
+
 				res, err := s.RetrieveFile(ctx, p)
 
 				eRes := &goseidon.RetrieveFileResult{
-					File: []byte{},
+					File:        []byte{},
+					RetrievedAt: currentTime,
 				}
 				Expect(res).To(Equal(eRes))
 				Expect(err).To(BeNil())
