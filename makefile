@@ -35,10 +35,10 @@ test:
 .PHONY: generate-mock
 generate-mock:
 	mockgen -source goseidon.go -destination=goseidon_mock.go -package=goseidon
-	mockgen -source pkg/aws-s3/storage.go -destination=pkg/aws-s3/storage_mock.go -package=aws_s3
+	mockgen -source pkg/aws-s3/storage.go -destination=internal/aws/storage_mock.go -package=aws
 	mockgen -source internal/io/client.go -destination=internal/io/client_mock.go -package=io
 	mockgen -source internal/clock/client.go -destination=internal/clock/client_mock.go -package=clock
-	mockgen -source pkg/g-cloud/client.go -destination=pkg/g-cloud/client_mock.go -package=g_cloud
+	mockgen -source internal/g-cloud/client.go -destination=internal/g-cloud/client_mock.go -package=g_cloud
 
 .PHONY: run-example
 run-example:
