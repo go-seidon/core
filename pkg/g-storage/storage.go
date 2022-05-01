@@ -22,7 +22,7 @@ func (s *GoogleStorage) UploadFile(ctx context.Context, p goseidon.UploadFilePar
 		return nil, fmt.Errorf("invalid context")
 	}
 
-	wc := s.Client.NewWriter(ctx, s.Config.BucketName, p.FileName)
+	wc := s.Client.NewWriter(ctx, s.Config.BucketName, p.FileId)
 	buf := bytes.NewBuffer(p.FileData)
 	_, err := s.Client.Copy(wc, buf)
 	if err != nil {
@@ -36,6 +36,7 @@ func (s *GoogleStorage) UploadFile(ctx context.Context, p goseidon.UploadFilePar
 
 	uploadedAt := s.Clock.Now()
 	res := &goseidon.UploadFileResult{
+		FileId:     p.FileId,
 		FileName:   p.FileName,
 		UploadedAt: uploadedAt,
 	}

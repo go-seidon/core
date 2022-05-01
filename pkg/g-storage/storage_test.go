@@ -111,7 +111,7 @@ var _ = Describe("Storage", func() {
 		When("failed copy file", func() {
 			It("should return error", func() {
 				cl.EXPECT().
-					NewWriter(gomock.Eq(ctx), gomock.Eq(cfg.BucketName), gomock.Eq(p.FileName)).
+					NewWriter(gomock.Eq(ctx), gomock.Eq(cfg.BucketName), gomock.Eq(p.FileId)).
 					Return(wc).
 					Times(1)
 				buf := bytes.NewBuffer(p.FileData)
@@ -134,7 +134,7 @@ var _ = Describe("Storage", func() {
 					Return(fmt.Errorf("failed close file")).
 					Times(1)
 				cl.EXPECT().
-					NewWriter(gomock.Eq(ctx), gomock.Eq(cfg.BucketName), gomock.Eq(p.FileName)).
+					NewWriter(gomock.Eq(ctx), gomock.Eq(cfg.BucketName), gomock.Eq(p.FileId)).
 					Return(wc).
 					Times(1)
 				buf := bytes.NewBuffer(p.FileData)
@@ -157,7 +157,7 @@ var _ = Describe("Storage", func() {
 					Return(nil).
 					Times(1)
 				cl.EXPECT().
-					NewWriter(gomock.Eq(ctx), gomock.Eq(cfg.BucketName), gomock.Eq(p.FileName)).
+					NewWriter(gomock.Eq(ctx), gomock.Eq(cfg.BucketName), gomock.Eq(p.FileId)).
 					Return(wc).
 					Times(1)
 				buf := bytes.NewBuffer(p.FileData)
@@ -170,6 +170,7 @@ var _ = Describe("Storage", func() {
 				res, err := s.UploadFile(ctx, p)
 
 				eRes := &goseidon.UploadFileResult{
+					FileId:     p.FileId,
 					FileName:   p.FileName,
 					UploadedAt: currentTime,
 				}

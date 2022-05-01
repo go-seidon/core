@@ -163,7 +163,7 @@ var _ = Describe("Storage", func() {
 	Context("UploadFile method", func() {
 		var (
 			ctx         context.Context
-			s           goseidon.Storage
+			s           *aws_s3.AwsS3Storage
 			p           goseidon.UploadFileParam
 			cfg         *aws_s3.AwsS3Config
 			cl          *aws_s3.MockAwsS3Client
@@ -183,10 +183,9 @@ var _ = Describe("Storage", func() {
 			)
 			currentTime = time.Now()
 			clo = clock.NewMockClock(ctrl)
-			storage, _ := aws_s3.NewAwsS3Storage(cfg)
-			storage.Client = cl
-			storage.Clock = clo
-			s = storage
+			s, _ = aws_s3.NewAwsS3Storage(cfg)
+			s.Client = cl
+			s.Clock = clo
 			p = goseidon.UploadFileParam{}
 		})
 
@@ -204,7 +203,7 @@ var _ = Describe("Storage", func() {
 				param := &s3.PutObjectInput{
 					Body:   bytes.NewReader(p.FileData),
 					Bucket: aws.String(cfg.BucketName),
-					Key:    aws.String(p.FileName),
+					Key:    aws.String(p.FileId),
 				}
 				cl.EXPECT().
 					PutObject(gomock.Eq(param)).
@@ -222,7 +221,7 @@ var _ = Describe("Storage", func() {
 				param := &s3.PutObjectInput{
 					Body:   bytes.NewReader(p.FileData),
 					Bucket: aws.String(cfg.BucketName),
-					Key:    aws.String(p.FileName),
+					Key:    aws.String(p.FileId),
 				}
 				out := &s3.PutObjectOutput{}
 				cl.EXPECT().
@@ -234,6 +233,7 @@ var _ = Describe("Storage", func() {
 				res, err := s.UploadFile(ctx, p)
 
 				eRes := &goseidon.UploadFileResult{
+					FileId:     p.FileId,
 					FileName:   p.FileName,
 					UploadedAt: currentTime,
 				}

@@ -44,7 +44,7 @@ func (s *AwsS3Storage) UploadFile(ctx context.Context, p goseidon.UploadFilePara
 	_, err := s.Client.PutObject(&s3.PutObjectInput{
 		Body:   bytes.NewReader(p.FileData),
 		Bucket: aws.String(s.config.BucketName),
-		Key:    aws.String(p.FileName),
+		Key:    aws.String(p.FileId),
 	})
 	if err != nil {
 		return nil, err
@@ -52,6 +52,7 @@ func (s *AwsS3Storage) UploadFile(ctx context.Context, p goseidon.UploadFilePara
 
 	uploadedAt := s.Clock.Now()
 	res := &goseidon.UploadFileResult{
+		FileId:     p.FileId,
 		FileName:   p.FileName,
 		UploadedAt: uploadedAt,
 	}

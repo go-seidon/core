@@ -79,7 +79,7 @@ var _ = Describe("Storage", func() {
 	Context("UploadFile method", func() {
 		var (
 			ctx         context.Context
-			s           goseidon.Storage
+			s           *local.LocalStorage
 			p           goseidon.UploadFileParam
 			c           *local.LocalConfig
 			fm          *io.MockFileManager
@@ -101,10 +101,9 @@ var _ = Describe("Storage", func() {
 			fm = io.NewMockFileManager(ctrl)
 			currentTime = time.Now()
 			clo = clock.NewMockClock(ctrl)
-			storage, _ := local.NewLocalStorage(c)
-			storage.FileManager = fm
-			storage.Clock = clo
-			s = storage
+			s, _ = local.NewLocalStorage(c)
+			s.FileManager = fm
+			s.Clock = clo
 		})
 
 		When("context is invalid", func() {
@@ -143,7 +142,7 @@ var _ = Describe("Storage", func() {
 					Times(1)
 
 				fm.EXPECT().
-					IsExists(gomock.Eq(c.StorageDir + "/" + p.FileName)).
+					IsExists(gomock.Eq(c.StorageDir + "/" + p.FileId)).
 					Return(true).
 					Times(1)
 
@@ -162,13 +161,13 @@ var _ = Describe("Storage", func() {
 					Times(1)
 
 				fm.EXPECT().
-					IsExists(gomock.Eq(c.StorageDir + "/" + p.FileName)).
+					IsExists(gomock.Eq(c.StorageDir + "/" + p.FileId)).
 					Return(false).
 					Times(1)
 
 				fm.EXPECT().
 					WriteFile(
-						gomock.Eq(c.StorageDir+"/"+p.FileName),
+						gomock.Eq(c.StorageDir+"/"+p.FileId),
 						gomock.Eq(make([]byte, 1)),
 						gomock.Eq(fs.FileMode(0644)),
 					).
@@ -189,13 +188,13 @@ var _ = Describe("Storage", func() {
 					Times(1)
 
 				fm.EXPECT().
-					IsExists(gomock.Eq(c.StorageDir + "/" + p.FileName)).
+					IsExists(gomock.Eq(c.StorageDir + "/" + p.FileId)).
 					Return(false).
 					Times(1)
 
 				fm.EXPECT().
 					WriteFile(
-						gomock.Eq(c.StorageDir+"/"+p.FileName),
+						gomock.Eq(c.StorageDir+"/"+p.FileId),
 						gomock.Eq(make([]byte, 1)),
 						gomock.Eq(fs.FileMode(0644)),
 					).
@@ -206,6 +205,7 @@ var _ = Describe("Storage", func() {
 				res, err := s.UploadFile(ctx, p)
 
 				eRes := &goseidon.UploadFileResult{
+					FileId:     p.FileId,
 					FileName:   p.FileName,
 					UploadedAt: currentTime,
 				}
