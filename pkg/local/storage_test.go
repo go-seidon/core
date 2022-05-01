@@ -24,53 +24,29 @@ func TestLocal(t *testing.T) {
 
 var _ = Describe("Storage", func() {
 	Context("NewLocalStorage function", func() {
-		var (
-			c *local.LocalConfig
-		)
-
-		BeforeEach(func() {
-			c = &local.LocalConfig{
-				StorageDir: "storage",
-			}
-		})
-
-		When("config is invalid", func() {
+		When("option is invalid", func() {
 			It("should return error", func() {
 				s, err := local.NewLocalStorage(nil)
 
 				Expect(s).To(BeNil())
-				Expect(err).To(Equal(fmt.Errorf("invalid storage config")))
+				Expect(err).To(Equal(fmt.Errorf("invalid storage option")))
+			})
+		})
+
+		When("failed apply option", func() {
+			It("should return error", func() {
+				s, err := local.NewLocalStorage(&withFailedOption{})
+
+				Expect(s).To(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("failed apply option")))
 			})
 		})
 
 		When("success create storage", func() {
 			It("should return local storage", func() {
-				s, err := local.NewLocalStorage(c)
+				s, err := local.NewLocalStorage(&withSuccessOption{})
 
 				Expect(s).ToNot(BeNil())
-				Expect(err).To(BeNil())
-			})
-		})
-	})
-
-	Context("NewLocalConfig function", func() {
-		When("storage directory is invalid", func() {
-			It("should return error", func() {
-				c, err := local.NewLocalConfig("")
-
-				Expect(c).To(BeNil())
-				Expect(err).To(Equal(fmt.Errorf("invalid storage directory")))
-			})
-		})
-
-		When("all param is valid", func() {
-			It("should return config", func() {
-				c, err := local.NewLocalConfig("storage/custom-dir/")
-
-				eConfig := &local.LocalConfig{
-					StorageDir: "storage/custom-dir",
-				}
-				Expect(c).To(Equal(eConfig))
 				Expect(err).To(BeNil())
 			})
 		})
@@ -81,7 +57,7 @@ var _ = Describe("Storage", func() {
 			ctx         context.Context
 			s           *local.LocalStorage
 			p           goseidon.UploadFileParam
-			c           *local.LocalConfig
+			cfg         *local.LocalConfig
 			fm          *io.MockFileManager
 			clo         *clock.MockClock
 			currentTime time.Time
@@ -93,7 +69,7 @@ var _ = Describe("Storage", func() {
 				FileName: "image.jpg",
 				FileData: make([]byte, 1),
 			}
-			c = &local.LocalConfig{
+			cfg = &local.LocalConfig{
 				StorageDir: "storage",
 			}
 			t := GinkgoT()
@@ -101,9 +77,11 @@ var _ = Describe("Storage", func() {
 			fm = io.NewMockFileManager(ctrl)
 			currentTime = time.Now()
 			clo = clock.NewMockClock(ctrl)
-			s, _ = local.NewLocalStorage(c)
-			s.FileManager = fm
-			s.Clock = clo
+			s = &local.LocalStorage{
+				Config: cfg,
+				Client: fm,
+				Clock:  clo,
+			}
 		})
 
 		When("context is invalid", func() {
@@ -118,31 +96,31 @@ var _ = Describe("Storage", func() {
 		When("failed create storage dir", func() {
 			It("should return error", func() {
 				fm.EXPECT().
-					IsExists(gomock.Eq(c.StorageDir)).
+					IsExists(gomock.Eq(cfg.StorageDir)).
 					Return(false).
 					Times(1)
 
 				fm.EXPECT().
-					CreateDir(gomock.Eq(c.StorageDir), gomock.Eq(fs.FileMode(0644))).
+					CreateDir(gomock.Eq(cfg.StorageDir), gomock.Eq(fs.FileMode(0644))).
 					Return(fmt.Errorf("invalid storage dir")).
 					Times(1)
 
 				res, err := s.UploadFile(ctx, p)
 
 				Expect(res).To(BeNil())
-				Expect(err).To(Equal(fmt.Errorf("failed create storage dir: %s", c.StorageDir)))
+				Expect(err).To(Equal(fmt.Errorf("failed create storage dir: %s", cfg.StorageDir)))
 			})
 		})
 
 		When("file already exists", func() {
 			It("should return error", func() {
 				fm.EXPECT().
-					IsExists(gomock.Eq(c.StorageDir)).
+					IsExists(gomock.Eq(cfg.StorageDir)).
 					Return(true).
 					Times(1)
 
 				fm.EXPECT().
-					IsExists(gomock.Eq(c.StorageDir + "/" + p.FileId)).
+					IsExists(gomock.Eq(cfg.StorageDir + "/" + p.FileId)).
 					Return(true).
 					Times(1)
 
@@ -156,18 +134,18 @@ var _ = Describe("Storage", func() {
 		When("failed upload file", func() {
 			It("should return error", func() {
 				fm.EXPECT().
-					IsExists(gomock.Eq(c.StorageDir)).
+					IsExists(gomock.Eq(cfg.StorageDir)).
 					Return(true).
 					Times(1)
 
 				fm.EXPECT().
-					IsExists(gomock.Eq(c.StorageDir + "/" + p.FileId)).
+					IsExists(gomock.Eq(cfg.StorageDir + "/" + p.FileId)).
 					Return(false).
 					Times(1)
 
 				fm.EXPECT().
 					WriteFile(
-						gomock.Eq(c.StorageDir+"/"+p.FileId),
+						gomock.Eq(cfg.StorageDir+"/"+p.FileId),
 						gomock.Eq(make([]byte, 1)),
 						gomock.Eq(fs.FileMode(0644)),
 					).
@@ -183,18 +161,18 @@ var _ = Describe("Storage", func() {
 		When("success upload file", func() {
 			It("should return result", func() {
 				fm.EXPECT().
-					IsExists(gomock.Eq(c.StorageDir)).
+					IsExists(gomock.Eq(cfg.StorageDir)).
 					Return(true).
 					Times(1)
 
 				fm.EXPECT().
-					IsExists(gomock.Eq(c.StorageDir + "/" + p.FileId)).
+					IsExists(gomock.Eq(cfg.StorageDir + "/" + p.FileId)).
 					Return(false).
 					Times(1)
 
 				fm.EXPECT().
 					WriteFile(
-						gomock.Eq(c.StorageDir+"/"+p.FileId),
+						gomock.Eq(cfg.StorageDir+"/"+p.FileId),
 						gomock.Eq(make([]byte, 1)),
 						gomock.Eq(fs.FileMode(0644)),
 					).
@@ -220,7 +198,7 @@ var _ = Describe("Storage", func() {
 			ctx         context.Context
 			s           *local.LocalStorage
 			p           goseidon.RetrieveFileParam
-			c           *local.LocalConfig
+			cfg         *local.LocalConfig
 			clo         *clock.MockClock
 			fm          *io.MockFileManager
 			currentTime time.Time
@@ -231,17 +209,19 @@ var _ = Describe("Storage", func() {
 			p = goseidon.RetrieveFileParam{
 				Id: "unique-access-id",
 			}
-			c = &local.LocalConfig{
+			cfg = &local.LocalConfig{
 				StorageDir: "storage",
 			}
 			t := GinkgoT()
 			ctrl := gomock.NewController(t)
 			fm = io.NewMockFileManager(ctrl)
 			clo = clock.NewMockClock(ctrl)
-			s, _ = local.NewLocalStorage(c)
-			s.FileManager = fm
-			s.Clock = clo
 			currentTime = time.Now()
+			s = &local.LocalStorage{
+				Config: cfg,
+				Client: fm,
+				Clock:  clo,
+			}
 		})
 
 		When("context is invalid", func() {
@@ -256,7 +236,7 @@ var _ = Describe("Storage", func() {
 		When("file is not available", func() {
 			It("should return error", func() {
 				fm.EXPECT().
-					IsExists(gomock.Eq(c.StorageDir + "/" + p.Id)).
+					IsExists(gomock.Eq(cfg.StorageDir + "/" + p.Id)).
 					Return(false).
 					Times(1)
 				res, err := s.RetrieveFile(ctx, p)
@@ -269,12 +249,12 @@ var _ = Describe("Storage", func() {
 		When("failed open file", func() {
 			It("should return error", func() {
 				fm.EXPECT().
-					IsExists(gomock.Eq(c.StorageDir + "/" + p.Id)).
+					IsExists(gomock.Eq(cfg.StorageDir + "/" + p.Id)).
 					Return(true).
 					Times(1)
 
 				fm.EXPECT().
-					Open(gomock.Eq(c.StorageDir+"/"+p.Id)).
+					Open(gomock.Eq(cfg.StorageDir+"/"+p.Id)).
 					Return(nil, fmt.Errorf("access denied")).
 					Times(1)
 
@@ -288,13 +268,13 @@ var _ = Describe("Storage", func() {
 		When("failed read file", func() {
 			It("should return error", func() {
 				fm.EXPECT().
-					IsExists(gomock.Eq(c.StorageDir + "/" + p.Id)).
+					IsExists(gomock.Eq(cfg.StorageDir + "/" + p.Id)).
 					Return(true).
 					Times(1)
 
 				file := &os.File{}
 				fm.EXPECT().
-					Open(gomock.Eq(c.StorageDir+"/"+p.Id)).
+					Open(gomock.Eq(cfg.StorageDir+"/"+p.Id)).
 					Return(file, nil).
 					Times(1)
 
@@ -313,13 +293,13 @@ var _ = Describe("Storage", func() {
 		When("success retrieve file", func() {
 			It("should return result", func() {
 				fm.EXPECT().
-					IsExists(gomock.Eq(c.StorageDir + "/" + p.Id)).
+					IsExists(gomock.Eq(cfg.StorageDir + "/" + p.Id)).
 					Return(true).
 					Times(1)
 
 				file := &os.File{}
 				fm.EXPECT().
-					Open(gomock.Eq(c.StorageDir+"/"+p.Id)).
+					Open(gomock.Eq(cfg.StorageDir+"/"+p.Id)).
 					Return(file, nil).
 					Times(1)
 
@@ -345,11 +325,13 @@ var _ = Describe("Storage", func() {
 
 	Context("DeleteFile method", func() {
 		var (
-			ctx context.Context
-			s   goseidon.Storage
-			p   goseidon.DeleteFileParam
-			c   *local.LocalConfig
-			fm  *io.MockFileManager
+			ctx         context.Context
+			s           *local.LocalStorage
+			p           goseidon.DeleteFileParam
+			cfg         *local.LocalConfig
+			fm          *io.MockFileManager
+			clo         *clock.MockClock
+			currentTime time.Time
 		)
 
 		BeforeEach(func() {
@@ -357,15 +339,19 @@ var _ = Describe("Storage", func() {
 			p = goseidon.DeleteFileParam{
 				Id: "unique-access-id",
 			}
-			c = &local.LocalConfig{
+			cfg = &local.LocalConfig{
 				StorageDir: "storage",
 			}
 			t := GinkgoT()
 			ctrl := gomock.NewController(t)
 			fm = io.NewMockFileManager(ctrl)
-			storage, _ := local.NewLocalStorage(c)
-			storage.FileManager = fm
-			s = storage
+			clo = clock.NewMockClock(ctrl)
+			currentTime = time.Now()
+			s = &local.LocalStorage{
+				Config: cfg,
+				Client: fm,
+				Clock:  clo,
+			}
 		})
 
 		When("context is invalid", func() {
@@ -380,7 +366,7 @@ var _ = Describe("Storage", func() {
 		When("file is not found", func() {
 			It("should return error", func() {
 				fm.EXPECT().
-					IsExists(gomock.Eq(c.StorageDir + "/" + p.Id)).
+					IsExists(gomock.Eq(cfg.StorageDir + "/" + p.Id)).
 					Return(false).
 					Times(1)
 
@@ -394,12 +380,12 @@ var _ = Describe("Storage", func() {
 		When("failed remove file", func() {
 			It("should return error", func() {
 				fm.EXPECT().
-					IsExists(gomock.Eq(c.StorageDir + "/" + p.Id)).
+					IsExists(gomock.Eq(cfg.StorageDir + "/" + p.Id)).
 					Return(true).
 					Times(1)
 
 				fm.EXPECT().
-					RemoveFile(gomock.Eq(c.StorageDir + "/" + p.Id)).
+					RemoveFile(gomock.Eq(cfg.StorageDir + "/" + p.Id)).
 					Return(fmt.Errorf("invalid permission")).
 					Times(1)
 
@@ -412,26 +398,42 @@ var _ = Describe("Storage", func() {
 
 		When("success remove file", func() {
 			It("should return result", func() {
-				currentTime := time.Now()
-
 				fm.EXPECT().
-					IsExists(gomock.Eq(c.StorageDir + "/" + p.Id)).
+					IsExists(gomock.Eq(cfg.StorageDir + "/" + p.Id)).
 					Return(true).
 					Times(1)
 
 				fm.EXPECT().
-					RemoveFile(gomock.Eq(c.StorageDir + "/" + p.Id)).
+					RemoveFile(gomock.Eq(cfg.StorageDir + "/" + p.Id)).
 					Return(nil).
 					Times(1)
 
+				clo.EXPECT().Now().Return(currentTime).Times(1)
+
 				res, err := s.DeleteFile(ctx, p)
 
-				isAfterOrEqual := res.DeletedAt.After(currentTime) || res.DeletedAt.Equal(currentTime)
-				Expect(res.Id).To(Equal(p.Id))
-				Expect(isAfterOrEqual).To(BeTrue())
+				eRes := &goseidon.DeleteFileResult{
+					Id:        p.Id,
+					DeletedAt: currentTime,
+				}
+				Expect(res).To(Equal(eRes))
 				Expect(err).To(BeNil())
 			})
 		})
 
 	})
 })
+
+type withFailedOption struct {
+}
+
+func (o *withFailedOption) Apply(c *local.LocalConfig) error {
+	return fmt.Errorf("failed apply option")
+}
+
+type withSuccessOption struct {
+}
+
+func (o *withSuccessOption) Apply(c *local.LocalConfig) error {
+	return nil
+}
