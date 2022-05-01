@@ -102,12 +102,8 @@ func main() {
 }
 
 func MustCreateLocalStorage() goseidon.Storage {
-	config, err := local.NewLocalConfig("storage")
-	if err != nil {
-		panic(err)
-	}
-
-	storage, err := local.NewLocalStorage(config)
+	opt := local.WithNormalStorageDir("storage")
+	storage, err := local.NewLocalStorage(opt)
 	if err != nil {
 		panic(err)
 	}
@@ -120,14 +116,9 @@ func MustCreateAwsS3Storage() goseidon.Storage {
 	accessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
 	secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
 	bucketName := os.Getenv("AWS_S3_BUCKET_NAME")
-	cfg, _ := aws_s3.NewAwsS3Config(
-		region,
-		accessKeyId,
-		secretAccessKey,
-		bucketName,
-	)
 
-	storage, err := aws_s3.NewAwsS3Storage(cfg)
+	opt := aws_s3.WithStatisCredential(region, accessKeyId, secretAccessKey, bucketName)
+	storage, err := aws_s3.NewAwsS3Storage(opt)
 	if err != nil {
 		panic(err)
 	}
