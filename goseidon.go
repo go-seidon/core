@@ -27,7 +27,8 @@ type RetrieveFileParam struct {
 }
 
 type RetrieveFileResult struct {
-	File BinaryFile
+	File        BinaryFile
+	RetrievedAt time.Time
 }
 
 type Retriever interface {
