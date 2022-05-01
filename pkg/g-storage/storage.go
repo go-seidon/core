@@ -1,4 +1,4 @@
-package g_cloud
+package g_storage
 
 import (
 	"bytes"
@@ -6,21 +6,14 @@ import (
 	"fmt"
 	"io"
 
-	gstorage "cloud.google.com/go/storage"
 	goseidon "github.com/go-seidon/core"
 	"github.com/go-seidon/core/internal/clock"
-	"google.golang.org/api/option"
+	g_cloud "github.com/go-seidon/core/internal/g-cloud"
 )
-
-type GoogleConfig struct {
-	ProjectId      string
-	CredentialPath string
-	BucketName     string
-}
 
 type GoogleStorage struct {
 	Config *GoogleConfig
-	Client GoogleStorageClient
+	Client g_cloud.GoogleStorageClient
 	Clock  clock.Clock
 }
 
@@ -89,40 +82,18 @@ func (s *GoogleStorage) DeleteFile(ctx context.Context, p goseidon.DeleteFilePar
 	return res, nil
 }
 
-func NewGoogleConfig(projectId, credentialPath, bucketName string) (*GoogleConfig, error) {
-	if projectId == "" {
-		return nil, fmt.Errorf("invalid google project id")
-	}
-	if credentialPath == "" {
-		return nil, fmt.Errorf("invalid google credential path")
-	}
-	if bucketName == "" {
-		return nil, fmt.Errorf("invalid google bucket name")
-	}
-	c := &GoogleConfig{
-		ProjectId:      projectId,
-		CredentialPath: credentialPath,
-		BucketName:     bucketName,
-	}
-	return c, nil
-}
-
-func NewGoogleStorage(config *GoogleConfig) (*GoogleStorage, error) {
-	if config == nil {
-		return nil, fmt.Errorf("invalid google config")
+func NewGoogleStorage(opt GoogleStorageOption) (*GoogleStorage, error) {
+	if opt == nil {
+		return nil, fmt.Errorf("invalid google option")
 	}
 
-	ctx := context.Background()
-	gsClient, err := gstorage.NewClient(
-		ctx, option.WithCredentialsFile(config.CredentialPath),
-	)
+	config := &GoogleConfig{}
+	err := opt.Apply(config)
 	if err != nil {
 		return nil, err
 	}
-	client := &googleStorageClient{
-		client: gsClient,
-	}
 
+	client, _ := g_cloud.NewGoogleStorageClient(config.GoogleClient)
 	clock, _ := clock.NewClock()
 
 	s := &GoogleStorage{

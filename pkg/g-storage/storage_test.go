@@ -1,4 +1,4 @@
-package g_cloud_test
+package g_storage_test
 
 import (
 	"bytes"
@@ -8,9 +8,11 @@ import (
 	"testing"
 	"time"
 
+	"cloud.google.com/go/storage"
 	goseidon "github.com/go-seidon/core"
 	"github.com/go-seidon/core/internal/clock"
-	g_cloud "github.com/go-seidon/core/pkg/g-cloud"
+	g_cloud "github.com/go-seidon/core/internal/g-cloud"
+	g_storage "github.com/go-seidon/core/pkg/g-storage"
 	gomock "github.com/golang/mock/gomock"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -31,40 +33,33 @@ var _ = Describe("Storage", func() {
 		t = GinkgoT()
 	})
 
-	Context("NewGoogleConfig function", func() {
-		When("all param is valid", func() {
-			It("should return google config", func() {
-				cfg, err := g_cloud.NewGoogleConfig("project-id", "/var/credential-path/", "bucket-name")
+	Context("NewGoogleStorage function", func() {
+		When("option is invalid", func() {
+			It("should return error", func() {
+				s, err := g_storage.NewGoogleStorage(nil)
 
-				Expect(cfg).ToNot(BeNil())
+				Expect(s).To(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("invalid google option")))
+			})
+		})
+
+		When("failed apply option", func() {
+			It("should return error", func() {
+
+				s, err := g_storage.NewGoogleStorage(&withFailedApply{})
+
+				Expect(s).To(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("failed apply option")))
+			})
+		})
+
+		When("success apply option", func() {
+			It("should return storage", func() {
+
+				s, err := g_storage.NewGoogleStorage(&withSuccessApply{})
+
+				Expect(s).ToNot(BeNil())
 				Expect(err).To(BeNil())
-			})
-		})
-
-		When("project is is invalid", func() {
-			It("should return error", func() {
-				cfg, err := g_cloud.NewGoogleConfig("", "/var/credential-path/", "bucket-name")
-
-				Expect(cfg).To(BeNil())
-				Expect(err).To(Equal(fmt.Errorf("invalid google project id")))
-			})
-		})
-
-		When("credential path is invalid", func() {
-			It("should return error", func() {
-				cfg, err := g_cloud.NewGoogleConfig("project-id", "", "bucket-name")
-
-				Expect(cfg).To(BeNil())
-				Expect(err).To(Equal(fmt.Errorf("invalid google credential path")))
-			})
-		})
-
-		When("bucket name is invalid", func() {
-			It("should return error", func() {
-				cfg, err := g_cloud.NewGoogleConfig("project-id", "/var/credential-path/", "")
-
-				Expect(cfg).To(BeNil())
-				Expect(err).To(Equal(fmt.Errorf("invalid google bucket name")))
 			})
 		})
 	})
@@ -72,10 +67,10 @@ var _ = Describe("Storage", func() {
 	Context("UploadFile method", func() {
 		var (
 			ctx         context.Context
-			s           *g_cloud.GoogleStorage
+			s           *g_storage.GoogleStorage
 			cl          *g_cloud.MockGoogleStorageClient
 			wc          *g_cloud.MockWriteCloser
-			cfg         *g_cloud.GoogleConfig
+			cfg         *g_storage.GoogleConfig
 			p           goseidon.UploadFileParam
 			clo         *clock.MockClock
 			currentTime time.Time
@@ -83,21 +78,20 @@ var _ = Describe("Storage", func() {
 
 		BeforeEach(func() {
 			ctx = context.Background()
-			cfg, _ = g_cloud.NewGoogleConfig(
-				"project-id",
-				"/var/credential-path/",
-				"bucket-name",
-			)
-			s = &g_cloud.GoogleStorage{
-				Config: cfg,
+			cfg = &g_storage.GoogleConfig{
+				BucketName:   "bucket-name",
+				GoogleClient: &storage.Client{},
 			}
 			currentTime = time.Now()
 			ctrl := gomock.NewController(t)
 			cl = g_cloud.NewMockGoogleStorageClient(ctrl)
 			wc = g_cloud.NewMockWriteCloser(ctrl)
 			clo = clock.NewMockClock(ctrl)
-			s.Client = cl
-			s.Clock = clo
+			s = &g_storage.GoogleStorage{
+				Client: cl,
+				Clock:  clo,
+				Config: cfg,
+			}
 			p = goseidon.UploadFileParam{
 				FileData: make([]byte, 1),
 				FileName: "file-name.jpg",
@@ -189,7 +183,7 @@ var _ = Describe("Storage", func() {
 		var (
 			ctx context.Context
 			s   goseidon.Storage
-			cfg *g_cloud.GoogleConfig
+			cfg *g_storage.GoogleConfig
 			cl  *g_cloud.MockGoogleStorageClient
 			rc  *g_cloud.MockReadCloser
 			p   goseidon.RetrieveFileParam
@@ -198,14 +192,15 @@ var _ = Describe("Storage", func() {
 
 		BeforeEach(func() {
 			ctx = context.Background()
-			cfg, _ = g_cloud.NewGoogleConfig(
-				"project-id", "/var/credential-path/", "bucket-name",
-			)
+			cfg = &g_storage.GoogleConfig{
+				BucketName:   "bucket-name",
+				GoogleClient: &storage.Client{},
+			}
 			ctrl := gomock.NewController(t)
 			cl = g_cloud.NewMockGoogleStorageClient(ctrl)
 			rc = g_cloud.NewMockReadCloser(ctrl)
 			clo = clock.NewMockClock(ctrl)
-			s = &g_cloud.GoogleStorage{
+			s = &g_storage.GoogleStorage{
 				Client: cl,
 				Config: cfg,
 				Clock:  clo,
@@ -288,7 +283,7 @@ var _ = Describe("Storage", func() {
 		var (
 			ctx         context.Context
 			s           goseidon.Storage
-			cfg         *g_cloud.GoogleConfig
+			cfg         *g_storage.GoogleConfig
 			cl          *g_cloud.MockGoogleStorageClient
 			clo         *clock.MockClock
 			p           goseidon.DeleteFileParam
@@ -297,14 +292,15 @@ var _ = Describe("Storage", func() {
 
 		BeforeEach(func() {
 			ctx = context.Background()
-			cfg, _ = g_cloud.NewGoogleConfig(
-				"project-id", "/var/credential-path/", "bucket-name",
-			)
+			cfg = &g_storage.GoogleConfig{
+				BucketName:   "bucket-name",
+				GoogleClient: &storage.Client{},
+			}
 			ctrl := gomock.NewController(t)
 			cl = g_cloud.NewMockGoogleStorageClient(ctrl)
 			currentTime = time.Now()
 			clo = clock.NewMockClock(ctrl)
-			s = &g_cloud.GoogleStorage{
+			s = &g_storage.GoogleStorage{
 				Config: cfg,
 				Client: cl,
 				Clock:  clo,
@@ -358,3 +354,17 @@ var _ = Describe("Storage", func() {
 	})
 
 })
+
+type withFailedApply struct {
+}
+
+func (o *withFailedApply) Apply(c *g_storage.GoogleConfig) error {
+	return fmt.Errorf("failed apply option")
+}
+
+type withSuccessApply struct {
+}
+
+func (o *withSuccessApply) Apply(c *g_storage.GoogleConfig) error {
+	return nil
+}
