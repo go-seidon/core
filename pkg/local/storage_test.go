@@ -217,11 +217,13 @@ var _ = Describe("Storage", func() {
 
 	Context("RetrieveFile method", func() {
 		var (
-			ctx context.Context
-			s   goseidon.Storage
-			p   goseidon.RetrieveFileParam
-			c   *local.LocalConfig
-			fm  *io.MockFileManager
+			ctx         context.Context
+			s           *local.LocalStorage
+			p           goseidon.RetrieveFileParam
+			c           *local.LocalConfig
+			clo         *clock.MockClock
+			fm          *io.MockFileManager
+			currentTime time.Time
 		)
 
 		BeforeEach(func() {
@@ -235,9 +237,11 @@ var _ = Describe("Storage", func() {
 			t := GinkgoT()
 			ctrl := gomock.NewController(t)
 			fm = io.NewMockFileManager(ctrl)
-			storage, _ := local.NewLocalStorage(c)
-			storage.FileManager = fm
-			s = storage
+			clo = clock.NewMockClock(ctrl)
+			s, _ = local.NewLocalStorage(c)
+			s.FileManager = fm
+			s.Clock = clo
+			currentTime = time.Now()
 		})
 
 		When("context is invalid", func() {
@@ -325,10 +329,13 @@ var _ = Describe("Storage", func() {
 					Return(binFile, nil).
 					Times(1)
 
+				clo.EXPECT().Now().Return(currentTime)
+
 				res, err := s.RetrieveFile(ctx, p)
 
 				eRes := &goseidon.RetrieveFileResult{
-					File: binFile,
+					File:        binFile,
+					RetrievedAt: currentTime,
 				}
 				Expect(res).To(Equal(eRes))
 				Expect(err).To(BeNil())

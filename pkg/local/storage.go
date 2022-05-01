@@ -75,8 +75,10 @@ func (s *LocalStorage) RetrieveFile(ctx context.Context, p goseidon.RetrieveFile
 		return nil, err
 	}
 
+	retrievedAt := s.Clock.Now()
 	res := &goseidon.RetrieveFileResult{
-		File: binFile,
+		File:        binFile,
+		RetrievedAt: retrievedAt,
 	}
 	return res, nil
 }

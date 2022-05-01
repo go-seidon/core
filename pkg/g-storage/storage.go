@@ -58,8 +58,10 @@ func (s *GoogleStorage) RetrieveFile(ctx context.Context, p goseidon.RetrieveFil
 		return nil, err
 	}
 
+	retrievedAt := s.Clock.Now()
 	res := &goseidon.RetrieveFileResult{
-		File: fileData,
+		File:        fileData,
+		RetrievedAt: retrievedAt,
 	}
 	return res, nil
 }

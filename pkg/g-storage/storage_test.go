@@ -181,13 +181,14 @@ var _ = Describe("Storage", func() {
 
 	Context("RetrieveFile method", func() {
 		var (
-			ctx context.Context
-			s   goseidon.Storage
-			cfg *g_storage.GoogleConfig
-			cl  *g_cloud.MockGoogleStorageClient
-			rc  *g_cloud.MockReadCloser
-			p   goseidon.RetrieveFileParam
-			clo *clock.MockClock
+			ctx         context.Context
+			s           goseidon.Storage
+			cfg         *g_storage.GoogleConfig
+			cl          *g_cloud.MockGoogleStorageClient
+			rc          *g_cloud.MockReadCloser
+			p           goseidon.RetrieveFileParam
+			clo         *clock.MockClock
+			currentTime time.Time
 		)
 
 		BeforeEach(func() {
@@ -200,6 +201,7 @@ var _ = Describe("Storage", func() {
 			cl = g_cloud.NewMockGoogleStorageClient(ctrl)
 			rc = g_cloud.NewMockReadCloser(ctrl)
 			clo = clock.NewMockClock(ctrl)
+			currentTime = time.Now()
 			s = &g_storage.GoogleStorage{
 				Client: cl,
 				Config: cfg,
@@ -267,11 +269,13 @@ var _ = Describe("Storage", func() {
 					NewReader(gomock.Eq(ctx), gomock.Eq(cfg.BucketName), gomock.Eq(p.Id)).
 					Return(rc, nil).
 					Times(1)
+				clo.EXPECT().Now().Return(currentTime)
 
 				res, err := s.RetrieveFile(ctx, p)
 
 				eRes := &goseidon.RetrieveFileResult{
-					File: make([]byte, 1),
+					File:        make([]byte, 1),
+					RetrievedAt: currentTime,
 				}
 				Expect(res).To(Equal(eRes))
 				Expect(err).To(BeNil())
